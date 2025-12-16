@@ -208,7 +208,7 @@ export default function AccountsSidebar({
   };
 
   return (
-    <div className="w-80 border-l border-border bg-muted/30 flex flex-col">
+    <div className="w-80 border-l border-border bg-sidebar flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
