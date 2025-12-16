@@ -45,6 +45,7 @@ export default function Dialer() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isDND, setIsDND] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [activeKey, setActiveKey] = useState(null);
 
   const { config, isConfigured, isLoaded } = useSipConfig();
   const { addLog, updateLog } = useCallLogs();
@@ -206,10 +207,14 @@ export default function Dialer() {
 
       if (/^[0-9]$/.test(key)) {
         e.preventDefault();
+        setActiveKey(key);
         handleDigitPress(key);
+        setTimeout(() => setActiveKey(null), 150);
       } else if (key === "*" || key === "#") {
         e.preventDefault();
+        setActiveKey(key);
         handleDigitPress(key);
+        setTimeout(() => setActiveKey(null), 150);
       } else if (key === "Backspace") {
         e.preventDefault();
         handleBackspace();
@@ -402,7 +407,10 @@ export default function Dialer() {
               <Button
                 key={btn.digit}
                 variant="outline"
-                className="h-14 text-lg font-medium hover:bg-accent hover:border-primary hover:scale-105 shadow-lg active:shadow-none transition-all flex flex-col items-center justify-center gap-0 rounded-md"
+                className={cn(
+                  "h-14 text-lg font-medium hover:bg-accent hover:border-primary hover:scale-105 shadow-lg active:shadow-none active:scale-95 transition-all flex flex-col items-center justify-center gap-0 rounded-md",
+                  activeKey === btn.digit && "bg-accent border-primary scale-105 shadow-none"
+                )}
                 onClick={() => handleDigitPress(btn.digit)}
               >
                 <span>{btn.digit}</span>
