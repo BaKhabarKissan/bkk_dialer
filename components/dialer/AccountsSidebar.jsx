@@ -230,7 +230,7 @@ export default function AccountsSidebar({
       initial={false}
       animate={{ width: isCollapsed ? 64 : 320 }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
-      className="border-l border-border bg-sidebar flex flex-col relative"
+      className="h-full border-l border-border bg-sidebar flex flex-col relative"
     >
       {/* Collapse Toggle Button */}
       <Button
@@ -246,8 +246,10 @@ export default function AccountsSidebar({
         )}
       </Button>
 
+      {/* Inner container for overflow control */}
+      <div className="flex-1 flex flex-col overflow-hidden min-h-0">
       {/* Header */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-border shrink-0">
         <div className={cn(
           "flex mb-3",
           isCollapsed ? "flex-col items-center gap-2" : "items-center justify-between"
@@ -352,7 +354,7 @@ export default function AccountsSidebar({
       </div>
 
       {/* Account List */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-2">
           {accounts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
@@ -541,7 +543,7 @@ export default function AccountsSidebar({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="p-3 border-t border-border">
+      <div className="p-3 border-t border-border shrink-0">
         <AnimatePresence mode="wait">
           {!isCollapsed ? (
             <motion.div
@@ -575,6 +577,7 @@ export default function AccountsSidebar({
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
       </div>
     </motion.div>
   );
