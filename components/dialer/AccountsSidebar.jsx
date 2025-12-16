@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +31,7 @@ import { RegistrationStatus } from "@/lib/sip/useSip";
 import { cn } from "@/lib/utils";
 import Settings from "./Settings";
 import CallLogs from "./CallLogs";
+import { ModeToggle } from "@/components/ui/mode-toggle";
 
 function AccountForm({ account, onSave, onCancel }) {
   const [form, setForm] = useState({
@@ -396,13 +396,16 @@ export default function AccountsSidebar({
 
       {/* Footer */}
       <div className="p-3 border-t border-border">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{accounts.length} account{accounts.length !== 1 ? "s" : ""}</span>
-          {activeAccountId && (
-            <Badge variant="secondary" className="text-xs">
-              {isRegistered ? "Online" : "Offline"}
-            </Badge>
-          )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>{accounts.length} account{accounts.length !== 1 ? "s" : ""}</span>
+            {activeAccountId && (
+              <Badge variant="secondary" className="text-xs">
+                {isRegistered ? "Online" : "Offline"}
+              </Badge>
+            )}
+          </div>
+          <ModeToggle />
         </div>
       </div>
     </div>
