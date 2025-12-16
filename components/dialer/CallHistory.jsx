@@ -254,7 +254,7 @@ export default function CallHistory({ onCallNumber }) {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div>
@@ -277,7 +277,7 @@ export default function CallHistory({ onCallNumber }) {
       </div>
 
       {/* Logs List */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-4 space-y-6">
           {groupedLogs.map((group) => (
             <DateGroup
