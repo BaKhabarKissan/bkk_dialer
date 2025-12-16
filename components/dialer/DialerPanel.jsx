@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import { CallStatus } from "@/lib/sip/useSip";
 import { useSipConfig } from "@/lib/sip/SipContext";
-import { useCallLogs } from "@/lib/sip/CallLogsContext";
 import { useSettings } from "@/lib/sip/SettingsContext";
 
 const dialPadButtons = [
@@ -49,11 +48,7 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
   const prevInitialNumberRef = useRef(initialNumber);
 
   const { isConfigured, isLoaded } = useSipConfig();
-  const { addLog, updateLog } = useCallLogs();
   const { settings } = useSettings();
-
-  const currentCallLogRef = useRef(null);
-  const callStartTimeRef = useRef(null);
 
   // Use SIP state passed from parent
   const {
@@ -114,46 +109,6 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
     }
   }, [isDND, callStatus, callDirection, reject]);
 
-  // Call logging
-  useEffect(() => {
-    // Call started (connecting or ringing)
-    if (
-      (callStatus === CallStatus.CONNECTING || callStatus === CallStatus.RINGING) &&
-      !currentCallLogRef.current
-    ) {
-      const log = addLog({
-        number: remoteNumber || phoneNumber,
-        direction: callDirection || "outgoing",
-        status: callStatus === CallStatus.RINGING && callDirection === "incoming" ? "ringing" : "connecting",
-        info: "",
-      });
-      currentCallLogRef.current = log.id;
-    }
-
-    // Call connected - start timing
-    if (callStatus === CallStatus.IN_CALL && !callStartTimeRef.current) {
-      callStartTimeRef.current = Date.now();
-      if (currentCallLogRef.current) {
-        updateLog(currentCallLogRef.current, { status: "in_progress" });
-      }
-    }
-
-    // Call ended
-    if (callStatus === CallStatus.IDLE && currentCallLogRef.current) {
-      const duration = callStartTimeRef.current
-        ? Math.floor((Date.now() - callStartTimeRef.current) / 1000)
-        : 0;
-
-      updateLog(currentCallLogRef.current, {
-        duration,
-        status: duration > 0 ? "completed" : "missed",
-      });
-
-      currentCallLogRef.current = null;
-      callStartTimeRef.current = null;
-    }
-  }, [callStatus, callDirection, remoteNumber, phoneNumber, addLog, updateLog]);
-
   const playDialSound = useCallback(() => {
     if (dialClickSound.current) {
       dialClickSound.current.currentTime = 0;
@@ -192,11 +147,8 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
   }, [answer]);
 
   const handleReject = useCallback(() => {
-    if (currentCallLogRef.current) {
-      updateLog(currentCallLogRef.current, { status: "rejected" });
-    }
     reject();
-  }, [reject, updateLog]);
+  }, [reject]);
 
   // Keyboard shortcuts (only when panel is open)
   useEffect(() => {
