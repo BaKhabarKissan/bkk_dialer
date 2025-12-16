@@ -120,7 +120,7 @@ export default function ContactsSidebar({ onCallNumber }) {
   };
 
   return (
-    <div className="w-64 border-r border-border bg-muted/30 flex flex-col">
+    <div className="w-80 border-r border-border bg-muted/30 flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">

@@ -208,7 +208,7 @@ export default function AccountsSidebar({
   };
 
   return (
-    <div className="w-64 border-l border-border bg-muted/30 flex flex-col">
+    <div className="w-80 border-l border-border bg-muted/30 flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
@@ -244,6 +244,7 @@ export default function AccountsSidebar({
               </Button>
             }
           />
+
           <CallLogs
             onCallNumber={onCallNumber}
             trigger={
@@ -253,6 +254,8 @@ export default function AccountsSidebar({
               </Button>
             }
           />
+
+          <ModeToggle />
         </div>
       </div>
 
@@ -412,15 +415,14 @@ export default function AccountsSidebar({
       {/* Footer */}
       <div className="p-3 border-t border-border">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center justify-between w-full gap-2 text-xs text-muted-foreground">
             <span>{accounts.length} account{accounts.length !== 1 ? "s" : ""}</span>
             {activeAccountId && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge className={`text-xs ${isRegistered ? "bg-green-600" : "bg-red-600"}`}>
                 {isRegistered ? "Online" : "Offline"}
               </Badge>
             )}
           </div>
-          <ModeToggle />
         </div>
       </div>
     </div>
