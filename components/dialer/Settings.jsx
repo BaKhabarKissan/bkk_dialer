@@ -164,28 +164,28 @@ export default function Settings({ trigger }) {
         </DialogHeader>
 
         <Tabs defaultValue="call" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="px-6 justify-start rounded-none border-b bg-transparent h-auto py-0">
-            <TabsTrigger value="call" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent gap-2 py-3">
+          <TabsList className="px-6 justify-start rounded-none bg-transparent h-auto py-0">
+            <TabsTrigger value="call">
               <Phone className="w-4 h-4" />
               Call
             </TabsTrigger>
-            <TabsTrigger value="audio" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent gap-2 py-3">
+            <TabsTrigger value="audio">
               <Volume2 className="w-4 h-4" />
               Audio
             </TabsTrigger>
-            <TabsTrigger value="video" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent gap-2 py-3">
+            <TabsTrigger value="video">
               <Video className="w-4 h-4" />
               Video
             </TabsTrigger>
-            <TabsTrigger value="network" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent gap-2 py-3">
+            <TabsTrigger value="network">
               <Network className="w-4 h-4" />
               Network
             </TabsTrigger>
-            <TabsTrigger value="recording" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent gap-2 py-3">
+            <TabsTrigger value="recording">
               <HardDrive className="w-4 h-4" />
               Recording
             </TabsTrigger>
-            <TabsTrigger value="ui" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent gap-2 py-3">
+            <TabsTrigger value="ui">
               <Monitor className="w-4 h-4" />
               Interface
             </TabsTrigger>
