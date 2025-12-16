@@ -13,12 +13,18 @@ import {
   Circle,
   Delete,
   Loader2,
+  Mic,
+  MicOff,
+  Pause,
+  Play,
+  BellOff,
 } from "lucide-react";
 import useSip, { CallStatus, RegistrationStatus } from "@/lib/sip/useSip";
 import { useSipConfig } from "@/lib/sip/SipContext";
 import { useCallLogs } from "@/lib/sip/CallLogsContext";
 import { useSettings } from "@/lib/sip/SettingsContext";
-import Sidebar from "./Sidebar";
+import ContactsSidebar from "./ContactsSidebar";
+import AccountsSidebar from "./AccountsSidebar";
 
 const dialPadButtons = [
   { digit: "1", letters: "" },
@@ -54,7 +60,6 @@ export default function Dialer() {
     isOnHold,
     callDirection,
     remoteNumber,
-    error,
     isRegistered,
     isInCall,
     connect,
@@ -291,26 +296,8 @@ export default function Dialer() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-background flex">
-      {/* Left Panel - Call Controls */}
-      <Sidebar
-        displayName={config.displayName || config.username}
-        registrationStatus={registrationStatus}
-        isRegistered={isRegistered}
-        isConfigured={isConfigured}
-        error={error}
-        onConnect={connect}
-        onDisconnect={disconnect}
-        isDND={isDND}
-        onToggleDND={() => setIsDND(!isDND)}
-        isInCall={isInCall}
-        isMuted={isMuted}
-        isOnHold={isOnHold}
-        isRecording={isRecording}
-        onToggleMute={toggleMute}
-        onToggleHold={toggleHold}
-        onToggleRecording={() => setIsRecording(!isRecording)}
-        onCallNumber={(number) => setPhoneNumber(number)}
-      />
+      {/* Left Panel - Contacts */}
+      <ContactsSidebar onCallNumber={(number) => setPhoneNumber(number)} />
 
       {/* Main Panel - Dialer */}
       <div className="flex-1 flex items-center justify-center p-8">
@@ -323,12 +310,20 @@ export default function Dialer() {
                   {isRegistered ? "Enter number" : "Not connected"}
                 </span>
               )}
-              {isRecording && isInCall && (
-                <div className="flex items-center gap-1 text-destructive">
-                  <Circle className="w-3 h-3 fill-destructive animate-pulse" />
-                  <span className="text-xs">REC</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {isDND && (
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-xs">
+                    <BellOff className="w-3 h-3 mr-1" />
+                    DND
+                  </Badge>
+                )}
+                {isRecording && isInCall && (
+                  <div className="flex items-center gap-1 text-destructive">
+                    <Circle className="w-3 h-3 fill-destructive animate-pulse" />
+                    <span className="text-xs">REC</span>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <p
@@ -350,6 +345,56 @@ export default function Dialer() {
               </Button>
             </div>
           </div>
+
+          {/* In-Call Controls */}
+          {isInCall && (
+            <div className="flex gap-2 mb-4">
+              <Button
+                variant={isMuted ? "default" : "outline"}
+                className={cn("flex-1 gap-2", isMuted && "bg-primary")}
+                onClick={toggleMute}
+              >
+                {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                {isMuted ? "Unmute" : "Mute"}
+              </Button>
+              <Button
+                variant={isOnHold ? "default" : "outline"}
+                className={cn("flex-1 gap-2", isOnHold && "bg-primary")}
+                onClick={toggleHold}
+              >
+                {isOnHold ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                {isOnHold ? "Resume" : "Hold"}
+              </Button>
+              <Button
+                variant={isRecording ? "default" : "outline"}
+                className={cn(
+                  "flex-1 gap-2",
+                  isRecording && "bg-destructive hover:bg-destructive/90"
+                )}
+                onClick={() => setIsRecording(!isRecording)}
+              >
+                <Circle className={cn("w-4 h-4", isRecording && "fill-current")} />
+                {isRecording ? "Stop" : "Rec"}
+              </Button>
+            </div>
+          )}
+
+          {/* DND Toggle (when not in call) */}
+          {!isInCall && (
+            <div className="flex gap-2 mb-4">
+              <Button
+                variant={isDND ? "default" : "outline"}
+                className={cn(
+                  "flex-1 gap-2",
+                  isDND && "bg-amber-600 hover:bg-amber-700"
+                )}
+                onClick={() => setIsDND(!isDND)}
+              >
+                <BellOff className="w-4 h-4" />
+                {isDND ? "DND On" : "DND Off"}
+              </Button>
+            </div>
+          )}
 
           {/* Dial Pad */}
           <div className="grid grid-cols-3 gap-2 mb-6">
@@ -416,11 +461,20 @@ export default function Dialer() {
           {/* Not Configured Message */}
           {!isConfigured && isLoaded && (
             <p className="text-center text-sm text-muted-foreground mt-4">
-              Configure your SIP account in settings to make calls
+              Add a SIP account to make calls
             </p>
           )}
         </Card>
       </div>
+
+      {/* Right Panel - Accounts */}
+      <AccountsSidebar
+        registrationStatus={registrationStatus}
+        isRegistered={isRegistered}
+        onConnect={connect}
+        onDisconnect={disconnect}
+        onCallNumber={(number) => setPhoneNumber(number)}
+      />
     </div>
   );
 }
