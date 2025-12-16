@@ -248,7 +248,10 @@ export default function AccountsSidebar({
 
       {/* Header */}
       <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-3">
+        <div className={cn(
+          "flex mb-3",
+          isCollapsed ? "flex-col items-center gap-2" : "items-center justify-between"
+        )}>
           <AnimatePresence mode="wait">
             {!isCollapsed ? (
               <motion.h2
