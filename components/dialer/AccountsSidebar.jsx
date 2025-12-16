@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -221,6 +222,9 @@ export default function AccountsSidebar({
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Add SIP Account</DialogTitle>
+                <DialogDescription>
+                  Enter your SIP account credentials to connect.
+                </DialogDescription>
               </DialogHeader>
               <AccountForm
                 onSave={handleAddAccount}
@@ -340,6 +344,9 @@ export default function AccountsSidebar({
                           <DialogContent onClick={(e) => e.stopPropagation()}>
                             <DialogHeader>
                               <DialogTitle>Edit Account</DialogTitle>
+                              <DialogDescription>
+                                Update your SIP account settings.
+                              </DialogDescription>
                             </DialogHeader>
                             <AccountForm
                               account={editingAccount}

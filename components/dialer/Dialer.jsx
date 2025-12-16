@@ -47,7 +47,7 @@ export default function Dialer() {
   const [isRecording, setIsRecording] = useState(false);
   const [activeKey, setActiveKey] = useState(null);
 
-  const { config, isConfigured, isLoaded } = useSipConfig();
+  const { config, isConfigured, isLoaded, activeAccountId } = useSipConfig();
   const { addLog, updateLog } = useCallLogs();
   const { settings } = useSettings();
 
@@ -76,6 +76,7 @@ export default function Dialer() {
 
   const dialClickSound = useRef(null);
   const ringtoneSound = useRef(null);
+  const hasInitialConnectRef = useRef(false);
 
   // Initialize sounds
   useEffect(() => {
@@ -86,9 +87,15 @@ export default function Dialer() {
     ringtoneSound.current.volume = settings.ringtoneVolume / 100;
   }, [settings.ringtone, settings.ringtoneVolume]);
 
-  // Auto-connect when config is available
+  // Reset connect ref when account changes
   useEffect(() => {
-    if (isLoaded && isConfigured && registrationStatus === RegistrationStatus.UNREGISTERED) {
+    hasInitialConnectRef.current = false;
+  }, [activeAccountId]);
+
+  // Auto-connect once when config is available
+  useEffect(() => {
+    if (isLoaded && isConfigured && !hasInitialConnectRef.current && registrationStatus === RegistrationStatus.UNREGISTERED) {
+      hasInitialConnectRef.current = true;
       connect();
     }
   }, [isLoaded, isConfigured, registrationStatus, connect]);
