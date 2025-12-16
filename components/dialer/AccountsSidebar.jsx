@@ -376,13 +376,21 @@ export default function AccountsSidebar({
                           disabled={status === RegistrationStatus.REGISTERING}
                         >
                           {status === RegistrationStatus.REGISTERING ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              Connecting...
+                            </>
                           ) : isRegistered ? (
-                            <WifiOff className="w-3.5 h-3.5" />
+                            <>
+                              <WifiOff className="w-3.5 h-3.5" />
+                              Disconnect
+                            </>
                           ) : (
-                            <Wifi className="w-3.5 h-3.5" />
+                            <>
+                              <Wifi className="w-3.5 h-3.5" />
+                              Connect
+                            </>
                           )}
-                          {isRegistered ? "Disconnect" : "Connect"}
                         </Button>
                       </div>
                     )}
