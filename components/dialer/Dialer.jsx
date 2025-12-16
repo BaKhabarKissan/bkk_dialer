@@ -332,7 +332,7 @@ export default function Dialer() {
                   displayNumber ? "text-foreground" : "text-muted-foreground/50"
                 )}
               >
-                {formatPhoneNumber(displayNumber) || "___-___-____"}
+                {formatPhoneNumber(displayNumber)}
               </p>
               <Button
                 variant="ghost"
