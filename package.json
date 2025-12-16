@@ -23,6 +23,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.23.26",
     "jssip": "^3.10.6",
     "lucide-react": "^0.561.0",
     "next": "16.0.10",
