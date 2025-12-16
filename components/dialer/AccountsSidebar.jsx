@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,9 @@ import {
   Check,
   Settings as SettingsIcon,
   History,
+  ChevronLeft,
+  ChevronRight,
+  Users,
 } from "lucide-react";
 import { useSipConfig } from "@/lib/sip/SipContext";
 import { RegistrationStatus } from "@/lib/sip/useSip";
@@ -124,7 +128,20 @@ function AccountForm({ account, onSave, onCancel }) {
   );
 }
 
-function AccountStatusBadge({ status }) {
+function AccountStatusBadge({ status, collapsed = false }) {
+  if (collapsed) {
+    switch (status) {
+      case RegistrationStatus.REGISTERED:
+        return <div className="w-2 h-2 rounded-full bg-green-500" />;
+      case RegistrationStatus.REGISTERING:
+        return <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />;
+      case RegistrationStatus.FAILED:
+        return <div className="w-2 h-2 rounded-full bg-destructive" />;
+      default:
+        return <div className="w-2 h-2 rounded-full bg-muted-foreground" />;
+    }
+  }
+
   switch (status) {
     case RegistrationStatus.REGISTERED:
       return (
@@ -182,6 +199,7 @@ export default function AccountsSidebar({
     setActiveAccount,
   } = useSipConfig();
 
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
 
@@ -208,11 +226,51 @@ export default function AccountsSidebar({
   };
 
   return (
-    <div className="w-80 border-l border-border bg-sidebar flex flex-col">
+    <motion.div
+      initial={false}
+      animate={{ width: isCollapsed ? 64 : 320 }}
+      transition={{ duration: 0.2, ease: "easeInOut" }}
+      className="border-l border-border bg-sidebar flex flex-col relative"
+    >
+      {/* Collapse Toggle Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute -left-3 top-4 z-10 h-6 w-6 rounded-full border bg-background shadow-sm"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        {isCollapsed ? (
+          <ChevronLeft className="h-3 w-3" />
+        ) : (
+          <ChevronRight className="h-3 w-3" />
+        )}
+      </Button>
+
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold">Accounts</h2>
+          <AnimatePresence mode="wait">
+            {!isCollapsed ? (
+              <motion.h2
+                key="title"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-sm font-semibold"
+              >
+                Accounts
+              </motion.h2>
+            ) : (
+              <motion.div
+                key="icon"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Users className="w-4 h-4 text-muted-foreground" />
+              </motion.div>
+            )}
+          </AnimatePresence>
           <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -234,29 +292,60 @@ export default function AccountsSidebar({
           </Dialog>
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex gap-2">
-          <Settings
-            trigger={
-              <Button variant="outline" size="sm" className="flex-1 gap-1.5">
-                <SettingsIcon className="w-3.5 h-3.5" />
-                Settings
-              </Button>
-            }
-          />
+        {/* Quick Actions - Only show when expanded */}
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex gap-2 overflow-hidden"
+            >
+              <Settings
+                trigger={
+                  <Button variant="outline" size="sm" className="flex-1 gap-1.5">
+                    <SettingsIcon className="w-3.5 h-3.5" />
+                    Settings
+                  </Button>
+                }
+              />
 
-          <CallLogs
-            onCallNumber={onCallNumber}
-            trigger={
-              <Button variant="outline" size="sm" className="flex-1 gap-1.5">
-                <History className="w-3.5 h-3.5" />
-                Logs
-              </Button>
-            }
-          />
+              <CallLogs
+                onCallNumber={onCallNumber}
+                trigger={
+                  <Button variant="outline" size="sm" className="flex-1 gap-1.5">
+                    <History className="w-3.5 h-3.5" />
+                    Logs
+                  </Button>
+                }
+              />
 
-          <ModeToggle />
-        </div>
+              <ModeToggle />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Collapsed Quick Actions */}
+        {isCollapsed && (
+          <div className="flex flex-col items-center gap-2 mt-2">
+            <Settings
+              trigger={
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <SettingsIcon className="w-4 h-4" />
+                </Button>
+              }
+            />
+            <CallLogs
+              onCallNumber={onCallNumber}
+              trigger={
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <History className="w-4 h-4" />
+                </Button>
+              }
+            />
+            <ModeToggle />
+          </div>
+        )}
       </div>
 
       {/* Account List */}
@@ -265,14 +354,18 @@ export default function AccountsSidebar({
           {accounts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
               <User className="w-10 h-10 mb-2 opacity-50" />
-              <p className="text-sm">No accounts yet</p>
-              <Button
-                variant="link"
-                size="sm"
-                onClick={() => setAddDialogOpen(true)}
-              >
-                Add your first account
-              </Button>
+              {!isCollapsed && (
+                <>
+                  <p className="text-sm">No accounts yet</p>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => setAddDialogOpen(true)}
+                  >
+                    Add your first account
+                  </Button>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
@@ -280,7 +373,39 @@ export default function AccountsSidebar({
                 const isActive = account.id === activeAccountId;
                 const status = isActive ? registrationStatus : RegistrationStatus.UNREGISTERED;
 
-                return (
+                return isCollapsed ? (
+                  /* Collapsed View */
+                  <div
+                    key={account.id}
+                    className={cn(
+                      "flex flex-col items-center p-2 rounded-md cursor-pointer transition-colors",
+                      isActive
+                        ? "bg-primary/10"
+                        : "hover:bg-accent/50"
+                    )}
+                    onClick={() => handleSelectAccount(account.id)}
+                    title={`${account.displayName || account.username} - ${isActive ? (isRegistered ? "Connected" : "Disconnected") : "Inactive"}`}
+                  >
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center relative",
+                        isActive ? "bg-primary/20" : "bg-muted"
+                      )}
+                    >
+                      {isActive && isRegistered ? (
+                        <Wifi className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <User className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      {isActive && (
+                        <div className="absolute -bottom-0.5 -right-0.5">
+                          <AccountStatusBadge status={status} collapsed />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Expanded View */
                   <div
                     key={account.id}
                     className={cn(
@@ -414,17 +539,40 @@ export default function AccountsSidebar({
 
       {/* Footer */}
       <div className="p-3 border-t border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center justify-between w-full gap-2 text-xs text-muted-foreground">
-            <span>{accounts.length} account{accounts.length !== 1 ? "s" : ""}</span>
-            {activeAccountId && (
-              <Badge className={`text-xs ${isRegistered ? "bg-green-600" : "bg-red-600"}`}>
-                {isRegistered ? "Online" : "Offline"}
-              </Badge>
-            )}
-          </div>
-        </div>
+        <AnimatePresence mode="wait">
+          {!isCollapsed ? (
+            <motion.div
+              key="expanded"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center justify-between w-full gap-2 text-xs text-muted-foreground"
+            >
+              <span>{accounts.length} account{accounts.length !== 1 ? "s" : ""}</span>
+              {activeAccountId && (
+                <Badge className={`text-xs ${isRegistered ? "bg-green-600" : "bg-red-600"}`}>
+                  {isRegistered ? "Online" : "Offline"}
+                </Badge>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="collapsed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex justify-center"
+            >
+              {activeAccountId && (
+                <div className={cn(
+                  "w-3 h-3 rounded-full",
+                  isRegistered ? "bg-green-500" : "bg-red-500"
+                )} />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }

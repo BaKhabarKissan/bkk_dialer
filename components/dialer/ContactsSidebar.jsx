@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,9 @@ import {
   Edit2,
   User,
   Building,
-  Mail,
+  ChevronLeft,
+  ChevronRight,
+  Users,
 } from "lucide-react";
 import { useContacts } from "@/lib/sip/ContactsContext";
 import { cn } from "@/lib/utils";
@@ -104,6 +107,7 @@ export default function ContactsSidebar({ onCallNumber }) {
     toggleFavorite,
   } = useContacts();
 
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState(null);
 
@@ -120,11 +124,51 @@ export default function ContactsSidebar({ onCallNumber }) {
   };
 
   return (
-    <div className="w-80 border-r border-border bg-sidebar flex flex-col">
+    <motion.div
+      initial={false}
+      animate={{ width: isCollapsed ? 64 : 320 }}
+      transition={{ duration: 0.2, ease: "easeInOut" }}
+      className="border-r border-border bg-sidebar flex flex-col relative"
+    >
+      {/* Collapse Toggle Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute -right-3 top-4 z-10 h-6 w-6 rounded-full border bg-background shadow-sm"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        {isCollapsed ? (
+          <ChevronRight className="h-3 w-3" />
+        ) : (
+          <ChevronLeft className="h-3 w-3" />
+        )}
+      </Button>
+
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold">Contacts</h2>
+          <AnimatePresence mode="wait">
+            {!isCollapsed ? (
+              <motion.h2
+                key="title"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-sm font-semibold"
+              >
+                Contacts
+              </motion.h2>
+            ) : (
+              <motion.div
+                key="icon"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Users className="w-4 h-4 text-muted-foreground" />
+              </motion.div>
+            )}
+          </AnimatePresence>
           <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -143,16 +187,25 @@ export default function ContactsSidebar({ onCallNumber }) {
           </Dialog>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search contacts..."
-            className="pl-8 h-8 text-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        {/* Search - Only show when expanded */}
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="relative overflow-hidden"
+            >
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search contacts..."
+                className="pl-8 h-8 text-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Contact List */}
@@ -161,17 +214,21 @@ export default function ContactsSidebar({ onCallNumber }) {
           {contacts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
               <User className="w-10 h-10 mb-2 opacity-50" />
-              <p className="text-sm">
-                {searchQuery ? "No contacts found" : "No contacts yet"}
-              </p>
-              {!searchQuery && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={() => setAddDialogOpen(true)}
-                >
-                  Add your first contact
-                </Button>
+              {!isCollapsed && (
+                <>
+                  <p className="text-sm">
+                    {searchQuery ? "No contacts found" : "No contacts yet"}
+                  </p>
+                  {!searchQuery && (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => setAddDialogOpen(true)}
+                    >
+                      Add your first contact
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           ) : (
@@ -179,96 +236,117 @@ export default function ContactsSidebar({ onCallNumber }) {
               {contacts.map((contact) => (
                 <div
                   key={contact.id}
-                  className="group p-2 rounded-md hover:bg-accent/50 transition-colors"
+                  className={cn(
+                    "group p-2 rounded-md hover:bg-accent/50 transition-colors",
+                    isCollapsed && "flex justify-center"
+                  )}
                 >
-                  <div className="flex items-start gap-2">
-                    {/* Avatar */}
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <span className="text-xs font-medium text-primary">
-                        {contact.name?.charAt(0)?.toUpperCase() || "?"}
-                      </span>
-                    </div>
+                  {isCollapsed ? (
+                    /* Collapsed View - Just Avatar */
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => onCallNumber?.(contact.number)}
+                      title={`${contact.name} - ${contact.number}`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-xs font-medium text-primary">
+                          {contact.name?.charAt(0)?.toUpperCase() || "?"}
+                        </span>
+                      </div>
+                    </Button>
+                  ) : (
+                    /* Expanded View */
+                    <div className="flex items-start gap-2">
+                      {/* Avatar */}
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-medium text-primary">
+                          {contact.name?.charAt(0)?.toUpperCase() || "?"}
+                        </span>
+                      </div>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1">
-                        <p className="text-sm font-medium truncate">
-                          {contact.name}
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p className="text-sm font-medium truncate">
+                            {contact.name}
+                          </p>
+                          {contact.favorite && (
+                            <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground font-mono truncate">
+                          {contact.number}
                         </p>
-                        {contact.favorite && (
-                          <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
+                        {contact.company && (
+                          <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                            <Building className="w-3 h-3" />
+                            {contact.company}
+                          </p>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground font-mono truncate">
-                        {contact.number}
-                      </p>
-                      {contact.company && (
-                        <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                          <Building className="w-3 h-3" />
-                          {contact.company}
-                        </p>
-                      )}
-                    </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => onCallNumber?.(contact.number)}
-                      >
-                        <Phone className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => toggleFavorite(contact.id)}
-                      >
-                        <Star
-                          className={cn(
-                            "w-3 h-3",
-                            contact.favorite && "text-amber-500 fill-amber-500"
-                          )}
-                        />
-                      </Button>
-                      <Dialog
-                        open={editingContact?.id === contact.id}
-                        onOpenChange={(open) =>
-                          setEditingContact(open ? contact : null)
-                        }
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Edit Contact</DialogTitle>
-                          </DialogHeader>
-                          <ContactForm
-                            contact={editingContact}
-                            onSave={handleUpdateContact}
-                            onCancel={() => setEditingContact(null)}
+                      {/* Actions */}
+                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => onCallNumber?.(contact.number)}
+                        >
+                          <Phone className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => toggleFavorite(contact.id)}
+                        >
+                          <Star
+                            className={cn(
+                              "w-3 h-3",
+                              contact.favorite && "text-amber-500 fill-amber-500"
+                            )}
                           />
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-destructive hover:text-destructive"
-                        onClick={() => deleteContact(contact.id)}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                        </Button>
+                        <Dialog
+                          open={editingContact?.id === contact.id}
+                          onOpenChange={(open) =>
+                            setEditingContact(open ? contact : null)
+                          }
+                        >
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Edit Contact</DialogTitle>
+                            </DialogHeader>
+                            <ContactForm
+                              contact={editingContact}
+                              onSave={handleUpdateContact}
+                              onCancel={() => setEditingContact(null)}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-destructive hover:text-destructive"
+                          onClick={() => deleteContact(contact.id)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -278,13 +356,35 @@ export default function ContactsSidebar({ onCallNumber }) {
 
       {/* Footer Stats */}
       <div className="p-3 border-t border-border">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{contacts.length} contacts</span>
-          <Badge variant="secondary" className="text-xs">
-            {contacts.filter((c) => c.favorite).length} favorites
-          </Badge>
-        </div>
+        <AnimatePresence mode="wait">
+          {!isCollapsed ? (
+            <motion.div
+              key="expanded"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center justify-between text-xs text-muted-foreground"
+            >
+              <span>{contacts.length} contacts</span>
+              <Badge variant="secondary" className="text-xs">
+                {contacts.filter((c) => c.favorite).length} favorites
+              </Badge>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="collapsed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex justify-center"
+            >
+              <Badge variant="secondary" className="text-xs">
+                {contacts.length}
+              </Badge>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }
