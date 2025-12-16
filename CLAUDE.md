@@ -29,7 +29,10 @@ This is a **Next.js 16** project using the **App Router** with **React 19** and 
 
 - `app/` - Next.js App Router (pages, layouts, routes)
 - `components/ui/` - shadcn/ui components
+- `components/dialer/` - Dialer UI components
 - `lib/utils.js` - Utility functions (includes `cn()` for Tailwind class merging)
+- `lib/sip/` - JsSIP integration and SIP utilities (to be created)
+- `public/sounds/` - Audio files (dial tones, ringtones, etc.)
 
 ### UI Stack
 
@@ -37,6 +40,13 @@ This is a **Next.js 16** project using the **App Router** with **React 19** and 
 - **Tailwind CSS v4** with CSS variables for theming (defined in `app/globals.css`)
 - **lucide-react** for icons
 - **tw-animate-css** for animations
+
+### VoIP Stack
+
+- **JsSIP** - WebRTC-based SIP library for VoIP functionality
+  - Handles SIP registration, call setup, and media
+  - Documentation: https://jssip.net/documentation/
+  - Key classes: `JsSIP.UA` (User Agent), `JsSIP.RTCSession` (call session)
 
 ### UI Guidelines
 
