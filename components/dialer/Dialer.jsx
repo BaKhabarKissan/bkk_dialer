@@ -401,8 +401,8 @@ export default function Dialer() {
             {dialPadButtons.map((btn) => (
               <Button
                 key={btn.digit}
-                variant="secondary"
-                className="h-14 text-lg font-medium hover:bg-accent transition-colors flex flex-col items-center justify-center gap-0"
+                variant="outline"
+                className="h-14 text-lg font-medium hover:bg-accent hover:border-primary hover:scale-105 shadow-lg active:shadow-none transition-all flex flex-col items-center justify-center gap-0 rounded-md"
                 onClick={() => handleDigitPress(btn.digit)}
               >
                 <span>{btn.digit}</span>
