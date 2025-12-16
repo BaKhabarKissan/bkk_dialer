@@ -225,16 +225,18 @@ export default function CallDialog({
                 animate={{ opacity: 1 }}
                 className="text-2xl font-bold"
               >
-                {callerName || "Unknown Caller"}
+                {callerName || formatPhoneNumber(callerNumber) || "Unknown"}
               </motion.h2>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="text-lg text-muted-foreground font-mono"
-              >
-                {formatPhoneNumber(callerNumber)}
-              </motion.p>
+              {callerName && callerNumber && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-lg text-muted-foreground font-mono"
+                >
+                  {formatPhoneNumber(callerNumber)}
+                </motion.p>
+              )}
 
               {/* Call Status / Duration */}
               <motion.div
