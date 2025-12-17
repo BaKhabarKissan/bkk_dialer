@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Phone, X } from "lucide-react";
 import useSip, { CallStatus, RegistrationStatus } from "@/lib/sip/useSip";
-import { useSipConfig, useSettings, useCallLogs } from "@/lib/store/hooks";
+import { useSipConfig, useSettings, useCallLogs, useContacts } from "@/lib/store/hooks";
 import ContactsSidebar from "./ContactsSidebar";
 import AccountsSidebar from "./AccountsSidebar";
 import CallHistory from "./CallHistory";
@@ -20,6 +20,7 @@ export default function Dialer() {
   const { config, isConfigured, isLoaded, activeAccountId } = useSipConfig();
   const { settings } = useSettings();
   const { addLog, updateLog } = useCallLogs();
+  const { findContactByNumber } = useContacts();
 
   const currentCallLogRef = useRef(null);
   const callStartTimeRef = useRef(null);
@@ -95,8 +96,11 @@ export default function Dialer() {
     ) {
       const direction = callDirection || "outgoing";
       callDirectionRef.current = direction;
+      const callNumber = remoteNumber || selectedNumber;
+      const contact = findContactByNumber(callNumber);
       const log = addLog({
-        number: remoteNumber || selectedNumber,
+        name: contact?.name || "",
+        number: callNumber,
         direction: direction,
         status: callStatus === CallStatus.RINGING && direction === "incoming" ? "ringing" : "connecting",
         info: "",
@@ -136,7 +140,7 @@ export default function Dialer() {
       callStartTimeRef.current = null;
       callDirectionRef.current = null;
     }
-  }, [callStatus, callDirection, remoteNumber, selectedNumber, addLog, updateLog]);
+  }, [callStatus, callDirection, remoteNumber, selectedNumber, addLog, updateLog, findContactByNumber]);
 
   // Handle answer call
   const handleAnswer = useCallback(() => {
@@ -283,7 +287,7 @@ export default function Dialer() {
               ? "connecting"
               : "in_call"
         }
-        callerName={null}
+        callerName={findContactByNumber(remoteNumber || selectedNumber)?.name || null}
         callerNumber={remoteNumber || selectedNumber}
         onAnswer={handleAnswer}
         onReject={handleReject}
