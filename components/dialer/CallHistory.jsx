@@ -65,7 +65,7 @@ function getDateKey(isoString) {
 // Get call icon based on direction and status
 function getCallIcon(direction, status) {
   if (status === "missed" || status === "rejected") {
-    return <PhoneMissed className="w-4 h-4 text-destructive" />;
+    return <PhoneMissed className="w-4 h-4 text-red-500" />;
   }
   if (direction === "incoming") {
     return <PhoneIncoming className="w-4 h-4 text-green-500" />;
@@ -84,7 +84,7 @@ function getStatusBadge(status) {
       );
     case "missed":
       return (
-        <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30">
+        <Badge variant="outline" className="text-xs bg-red-500/10 text-red-500 border-red-500/30">
           Missed
         </Badge>
       );
