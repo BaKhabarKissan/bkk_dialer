@@ -151,7 +151,7 @@ function CallLogItem({ log, onCall, onDelete, index }) {
                 {log.name || log.number || "Unknown"}
               </p>
             </div>
-            <div className="flex items-center gap-3text-muted-foreground mt-1 text-xs">
+            <div className="flex items-center gap-3text-muted-foreground text-xs">
               {log.name && log.number && (
                 <span className="truncate">{log.number}</span>
               )}
