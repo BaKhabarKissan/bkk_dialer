@@ -16,7 +16,7 @@ import {
   Trash2,
   Calendar,
 } from "lucide-react";
-import { useCallLogs } from "@/lib/sip/CallLogsContext";
+import { useCallLogs } from "@/lib/store/hooks";
 
 // Helper to format duration
 function formatDuration(seconds) {

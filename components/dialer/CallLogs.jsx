@@ -26,7 +26,7 @@ import {
   History,
   Phone,
 } from "lucide-react";
-import { useCallLogs } from "@/lib/sip/CallLogsContext";
+import { useCallLogs } from "@/lib/store/hooks";
 import { cn } from "@/lib/utils";
 
 // Format duration from seconds to mm:ss or hh:mm:ss

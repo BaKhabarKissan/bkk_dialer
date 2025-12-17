@@ -31,7 +31,7 @@ import {
   ChevronRight,
   Users,
 } from "lucide-react";
-import { useSipConfig } from "@/lib/sip/SipContext";
+import { useSipConfig } from "@/lib/store/hooks";
 import { RegistrationStatus } from "@/lib/sip/useSip";
 import { cn } from "@/lib/utils";
 import Settings from "./Settings";

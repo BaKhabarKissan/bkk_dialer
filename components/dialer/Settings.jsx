@@ -34,7 +34,8 @@ import {
   HardDrive,
   Monitor,
 } from "lucide-react";
-import { useSettings, availableCodecs } from "@/lib/sip/SettingsContext";
+import { useSettings } from "@/lib/store/hooks";
+import { availableCodecs } from "@/lib/store/settingsSlice";
 import { cn } from "@/lib/utils";
 
 function SettingRow({ label, children, className }) {

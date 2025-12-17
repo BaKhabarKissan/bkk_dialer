@@ -28,7 +28,7 @@ import {
   ChevronRight,
   Users,
 } from "lucide-react";
-import { useContacts } from "@/lib/sip/ContactsContext";
+import { useContacts } from "@/lib/store/hooks";
 import { cn } from "@/lib/utils";
 
 function ContactForm({ contact, onSave, onCancel }) {

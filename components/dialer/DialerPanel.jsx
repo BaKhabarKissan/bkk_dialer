@@ -22,8 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { CallStatus } from "@/lib/sip/useSip";
-import { useSipConfig } from "@/lib/sip/SipContext";
-import { useSettings } from "@/lib/sip/SettingsContext";
+import { useSipConfig, useSettings } from "@/lib/store/hooks";
 
 const dialPadButtons = [
   { digit: "1", letters: "" },
