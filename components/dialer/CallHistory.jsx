@@ -204,9 +204,9 @@ function DateGroup({ label, logs, onCall, onDelete }) {
       {/* Date Header */}
       <div className="flex items-center gap-3 px-2">
         <Calendar className="w-4 h-4 text-muted-foreground" />
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+        <Badge variant={"secondary"} className="text-sm font-semibold italic text-primary">
           {label}
-        </h3>
+        </Badge>
         <div className="flex-1 h-px bg-border" />
       </div>
 
