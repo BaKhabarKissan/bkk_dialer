@@ -15,6 +15,7 @@ import {
   Clock,
   Trash2,
   Calendar,
+  Dot,
 } from "lucide-react";
 import { useCallLogs } from "@/lib/store/hooks";
 
@@ -136,7 +137,7 @@ function CallLogItem({ log, onCall, onDelete, index }) {
       exit={{ opacity: 0, x: -100 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-      <Card className="p-4 hover:bg-accent/50 transition-colors group">
+      <Card className="p-2 hover:bg-accent/50 transition-colors group">
         <div className="flex items-center gap-4">
           {/* Call Icon */}
           <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
@@ -149,22 +150,25 @@ function CallLogItem({ log, onCall, onDelete, index }) {
               <p className="font-medium truncate">
                 {log.name || log.number || "Unknown"}
               </p>
-              {getStatusBadge(log.status)}
             </div>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+            <div className="flex items-center gap-3text-muted-foreground mt-1 text-xs">
               {log.name && log.number && (
                 <span className="truncate">{log.number}</span>
               )}
+              <Dot />
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {formatTime(log.time)}
               </span>
+              {log.status === "completed" && <Dot />}
               {log.duration > 0 && (
                 <span>{formatDuration(log.duration)}</span>
               )}
             </div>
           </div>
-
+          <div className="px-4">
+            {getStatusBadge(log.status)}
+          </div>
           {/* Actions */}
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
