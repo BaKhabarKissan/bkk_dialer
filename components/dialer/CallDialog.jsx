@@ -10,10 +10,10 @@ import {
   PhoneOff,
   PhoneIncoming,
   PhoneOutgoing,
-  User,
   Mic,
   MicOff,
   Volume2,
+  VolumeX,
 } from "lucide-react";
 
 // Get initials from name or number
@@ -54,7 +54,9 @@ export default function CallDialog({
   onReject,
   onHangup,
   onToggleMute,
+  onToggleSpeaker,
   isMuted = false,
+  isSpeakerMuted = false,
 }) {
   const [callDuration, setCallDuration] = useState(0);
   const [pulseIndex, setPulseIndex] = useState(0);
@@ -89,6 +91,54 @@ export default function CallDialog({
 
     return () => clearInterval(interval);
   }, [status]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      // Don't trigger if user is typing in an input
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+      const isIncoming = direction === "incoming";
+      const isRinging = status === "ringing";
+      const isInCall = status === "in_call";
+
+      switch (e.key) {
+        case "Enter":
+          if (isIncoming && isRinging && onAnswer) {
+            e.preventDefault();
+            onAnswer();
+          }
+          break;
+        case "Escape":
+          e.preventDefault();
+          if (isIncoming && isRinging && onReject) {
+            onReject();
+          } else if (onHangup) {
+            onHangup();
+          }
+          break;
+        case "m":
+        case "M":
+          if (isInCall && onToggleMute) {
+            e.preventDefault();
+            onToggleMute();
+          }
+          break;
+        case "s":
+        case "S":
+          if (isInCall && onToggleSpeaker) {
+            e.preventDefault();
+            onToggleSpeaker();
+          }
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, direction, status, onAnswer, onReject, onHangup, onToggleMute, onToggleSpeaker]);
 
   // Format duration as mm:ss
   const formatDuration = (seconds) => {
@@ -358,10 +408,14 @@ export default function CallDialog({
                   <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
                     <Button
                       size="lg"
-                      variant="outline"
-                      className="h-14 w-14 rounded-full shadow-lg"
+                      variant={isSpeakerMuted ? "default" : "outline"}
+                      className={cn(
+                        "h-14 w-14 rounded-full shadow-lg",
+                        isSpeakerMuted && "bg-primary"
+                      )}
+                      onClick={onToggleSpeaker}
                     >
-                      <Volume2 className="w-6 h-6" />
+                      {isSpeakerMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
                     </Button>
                   </motion.div>
                 </>
@@ -392,6 +446,10 @@ export default function CallDialog({
                   <span className="inline-flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">M</kbd>
                     Mute
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">S</kbd>
+                    Speaker
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Esc</kbd>

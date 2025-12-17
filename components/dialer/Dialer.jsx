@@ -33,6 +33,7 @@ export default function Dialer() {
     callDirection,
     remoteNumber,
     isMuted,
+    isSpeakerMuted,
     isOnHold,
     isRegistered,
     isInCall,
@@ -43,6 +44,7 @@ export default function Dialer() {
     hangup,
     reject,
     toggleMute,
+    toggleSpeaker,
     toggleHold,
     sendDTMF,
   } = sip;
@@ -285,7 +287,9 @@ export default function Dialer() {
         onReject={handleReject}
         onHangup={hangup}
         onToggleMute={toggleMute}
+        onToggleSpeaker={toggleSpeaker}
         isMuted={isMuted}
+        isSpeakerMuted={isSpeakerMuted}
       />
     </div>
   );
