@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,17 +22,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   Settings as SettingsIcon,
   Volume2,
-  Mic,
   Video,
   Network,
   Phone,
   HardDrive,
-  Monitor,
+  Play,
+  Square,
 } from "lucide-react";
 import { useSettings } from "@/lib/store/hooks";
 import { availableCodecs } from "@/lib/store/settingsSlice";
@@ -64,29 +63,62 @@ function SettingCheckbox({ label, checked, onCheckedChange, description }) {
 }
 
 function CodecList({ available, enabled, onMove }) {
+  const [selectedAvailable, setSelectedAvailable] = useState(null);
+  const [selectedEnabled, setSelectedEnabled] = useState(null);
+
+  const availableCodecsList = available.filter((c) => !enabled.includes(c.id));
+
+  const handleAddSelected = () => {
+    if (selectedAvailable) {
+      onMove(selectedAvailable, "add");
+      setSelectedAvailable(null);
+    }
+  };
+
+  const handleRemoveSelected = () => {
+    if (selectedEnabled) {
+      onMove(selectedEnabled, "remove");
+      setSelectedEnabled(null);
+    }
+  };
+
   return (
     <div className="flex gap-2">
       <div className="flex-1">
         <Label className="text-xs text-muted-foreground mb-1 block">Available</Label>
         <div className="border rounded-md h-32 overflow-auto p-1">
-          {available
-            .filter((c) => !enabled.includes(c.id))
-            .map((codec) => (
-              <div
-                key={codec.id}
-                className="text-xs px-2 py-1 hover:bg-accent rounded cursor-pointer"
-                onClick={() => onMove(codec.id, "add")}
-              >
-                {codec.name}
-              </div>
-            ))}
+          {availableCodecsList.map((codec) => (
+            <div
+              key={codec.id}
+              className={cn(
+                "text-xs px-2 py-1 rounded cursor-pointer",
+                selectedAvailable === codec.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+              )}
+              onClick={() => setSelectedAvailable(codec.id)}
+              onDoubleClick={() => onMove(codec.id, "add")}
+            >
+              {codec.name}
+            </div>
+          ))}
         </div>
       </div>
       <div className="flex flex-col justify-center gap-1">
-        <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => { }}>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-6 w-6"
+          onClick={handleAddSelected}
+          disabled={!selectedAvailable}
+        >
           →
         </Button>
-        <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => { }}>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-6 w-6"
+          onClick={handleRemoveSelected}
+          disabled={!selectedEnabled}
+        >
           ←
         </Button>
       </div>
@@ -98,8 +130,12 @@ function CodecList({ available, enabled, onMove }) {
             return codec ? (
               <div
                 key={id}
-                className="text-xs px-2 py-1 hover:bg-accent rounded cursor-pointer"
-                onClick={() => onMove(id, "remove")}
+                className={cn(
+                  "text-xs px-2 py-1 rounded cursor-pointer",
+                  selectedEnabled === id ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                )}
+                onClick={() => setSelectedEnabled(id)}
+                onDoubleClick={() => onMove(id, "remove")}
               >
                 {codec.name}
               </div>
@@ -115,10 +151,74 @@ export default function Settings({ trigger }) {
   const { settings, updateSettings, resetSettings } = useSettings();
   const [open, setOpen] = useState(false);
   const [localSettings, setLocalSettings] = useState(settings);
+  const [devices, setDevices] = useState({
+    audioInput: [],
+    audioOutput: [],
+    videoInput: [],
+  });
+  const [isPlayingRingtone, setIsPlayingRingtone] = useState(false);
+  const audioRef = useRef(null);
+
+  // Enumerate media devices
+  useEffect(() => {
+    async function enumerateDevices() {
+      try {
+        // Request permission first to get device labels
+        await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(stream => {
+          stream.getTracks().forEach(track => track.stop());
+        }).catch(() => {
+          // Permission denied, continue with limited device info
+        });
+
+        const deviceList = await navigator.mediaDevices.enumerateDevices();
+        setDevices({
+          audioInput: deviceList.filter(d => d.kind === "audioinput"),
+          audioOutput: deviceList.filter(d => d.kind === "audiooutput"),
+          videoInput: deviceList.filter(d => d.kind === "videoinput"),
+        });
+      } catch (error) {
+        console.error("Failed to enumerate devices:", error);
+      }
+    }
+
+    if (open) {
+      enumerateDevices();
+    }
+  }, [open]);
+
+  // Handle ringtone playback
+  const toggleRingtone = () => {
+    if (isPlayingRingtone) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      setIsPlayingRingtone(false);
+    } else {
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      }
+      audioRef.current.src = localSettings.ringtone || "/sounds/ringtone.mp3";
+      audioRef.current.volume = localSettings.ringtoneVolume / 100;
+      audioRef.current.loop = true;
+      audioRef.current.play().catch(err => console.error("Failed to play ringtone:", err));
+      setIsPlayingRingtone(true);
+    }
+  };
+
+  const stopRingtone = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setIsPlayingRingtone(false);
+  };
 
   const handleOpenChange = (isOpen) => {
     if (isOpen) {
       setLocalSettings(settings);
+    } else {
+      stopRingtone();
     }
     setOpen(isOpen);
   };
@@ -159,13 +259,13 @@ export default function Settings({ trigger }) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-7xl h-[85vh] overflow-y-auto pb-2 flex flex-col p-0">
-        <DialogHeader className="px-6 py-4 border-b">
+      <DialogContent className="sm:max-w-4xl h-[80vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-4 border-b shrink-0">
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="call" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="px-6 justify-start rounded-none bg-transparent h-auto py-0">
+          <TabsList className="px-6 justify-start rounded-none bg-transparent h-auto py-0 shrink-0">
             <TabsTrigger value="call">
               <Phone className="w-4 h-4" />
               Call
@@ -186,13 +286,9 @@ export default function Settings({ trigger }) {
               <HardDrive className="w-4 h-4" />
               Recording
             </TabsTrigger>
-            <TabsTrigger value="ui">
-              <Monitor className="w-4 h-4" />
-              Interface
-            </TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             {/* Call Settings */}
             <TabsContent value="call" className="m-0 p-6">
               <div className="grid grid-cols-2 gap-8">
@@ -249,7 +345,6 @@ export default function Settings({ trigger }) {
                         <SelectItem value="auto">Auto</SelectItem>
                         <SelectItem value="rfc2833">RFC 2833</SelectItem>
                         <SelectItem value="info">SIP INFO</SelectItem>
-                        <SelectItem value="inband">Inband</SelectItem>
                       </SelectContent>
                     </Select>
                   </SettingRow>
@@ -319,30 +414,27 @@ export default function Settings({ trigger }) {
 
                   <Separator />
 
-                  <h3 className="font-medium text-sm">Directory</h3>
-                  <SettingRow label="Directory URL">
-                    <Input
-                      className="w-full"
-                      placeholder="URL to directory"
-                      value={localSettings.directoryOfUsers}
-                      onChange={(e) => handleChange("directoryOfUsers", e.target.value)}
+                  <h3 className="font-medium text-sm">Interface</h3>
+                  <div className="space-y-1">
+                    <SettingCheckbox
+                      label="Sound Events"
+                      description="Play sounds for call events"
+                      checked={localSettings.soundEvents}
+                      onCheckedChange={(v) => handleChange("soundEvents", v)}
                     />
-                  </SettingRow>
-                  <SettingRow label="Default Action">
-                    <Select
-                      value={localSettings.defaultListAction}
-                      onValueChange={(v) => handleChange("defaultListAction", v)}
-                    >
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">Default</SelectItem>
-                        <SelectItem value="call">Call</SelectItem>
-                        <SelectItem value="message">Message</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </SettingRow>
+                    <SettingCheckbox
+                      label="Show Notifications"
+                      description="Show browser notifications for incoming calls"
+                      checked={localSettings.showNotifications}
+                      onCheckedChange={(v) => handleChange("showNotifications", v)}
+                    />
+                    <SettingCheckbox
+                      label="Enable Debug Log"
+                      description="Log debug information to console"
+                      checked={localSettings.enableDebugLog}
+                      onCheckedChange={(v) => handleChange("enableDebugLog", v)}
+                    />
+                  </div>
                 </div>
               </div>
             </TabsContent>
@@ -353,12 +445,26 @@ export default function Settings({ trigger }) {
                 <div className="space-y-4">
                   <h3 className="font-medium text-sm">Ringtone</h3>
                   <SettingRow label="Ringtone">
-                    <Input
-                      className="w-48"
-                      placeholder="/sounds/ringtone.mp3"
-                      value={localSettings.ringtone}
-                      onChange={(e) => handleChange("ringtone", e.target.value)}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        className="w-40"
+                        placeholder="/sounds/ringtone.mp3"
+                        value={localSettings.ringtone}
+                        onChange={(e) => handleChange("ringtone", e.target.value)}
+                      />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={toggleRingtone}
+                      >
+                        {isPlayingRingtone ? (
+                          <Square className="h-4 w-4" />
+                        ) : (
+                          <Play className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </SettingRow>
                   <SettingRow label="Volume">
                     <div className="flex items-center gap-2 w-48">
@@ -376,19 +482,6 @@ export default function Settings({ trigger }) {
                   <Separator />
 
                   <h3 className="font-medium text-sm">Devices</h3>
-                  <SettingRow label="Ring Device">
-                    <Select
-                      value={localSettings.ringDevice}
-                      onValueChange={(v) => handleChange("ringDevice", v)}
-                    >
-                      <SelectTrigger className="w-48">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">Default</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </SettingRow>
                   <SettingRow label="Speaker">
                     <Select
                       value={localSettings.speaker}
@@ -399,6 +492,11 @@ export default function Settings({ trigger }) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="default">Default</SelectItem>
+                        {devices.audioOutput.map((device) => (
+                          <SelectItem key={device.deviceId} value={device.deviceId}>
+                            {device.label || `Speaker ${device.deviceId.slice(0, 8)}`}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </SettingRow>
@@ -412,349 +510,194 @@ export default function Settings({ trigger }) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="default">Default</SelectItem>
+                        {devices.audioInput.map((device) => (
+                          <SelectItem key={device.deviceId} value={device.deviceId}>
+                            {device.label || `Microphone ${device.deviceId.slice(0, 8)}`}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </SettingRow>
 
-                  <div className="space-y-1 pt-2">
+                  <Separator />
+
+                  <h3 className="font-medium text-sm">Audio Processing</h3>
+                  <div className="space-y-1">
                     <SettingCheckbox
-                      label="Microphone Amplification"
-                      checked={localSettings.microphoneAmplification}
-                      onCheckedChange={(v) => handleChange("microphoneAmplification", v)}
+                      label="Echo Cancellation"
+                      description="Reduce echo during calls"
+                      checked={localSettings.echoCancellation}
+                      onCheckedChange={(v) => handleChange("echoCancellation", v)}
                     />
                     <SettingCheckbox
-                      label="Software Level Adjustment"
-                      checked={localSettings.softwareLevelAdjustment}
-                      onCheckedChange={(v) => handleChange("softwareLevelAdjustment", v)}
+                      label="Noise Suppression"
+                      description="Reduce background noise"
+                      checked={localSettings.noiseSuppression}
+                      onCheckedChange={(v) => handleChange("noiseSuppression", v)}
+                    />
+                    <SettingCheckbox
+                      label="Auto Gain Control"
+                      description="Automatically adjust microphone volume"
+                      checked={localSettings.autoGainControl}
+                      onCheckedChange={(v) => handleChange("autoGainControl", v)}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <h3 className="font-medium text-sm">Audio Codecs</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Select and order preferred audio codecs. WebRTC will negotiate the best available codec.
+                  </p>
                   <CodecList
                     available={availableCodecs}
                     enabled={localSettings.enabledAudioCodecs}
                     onMove={handleCodecMove}
                   />
-
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2">
-                    <SettingCheckbox
-                      label="VAD"
-                      checked={localSettings.vad}
-                      onCheckedChange={(v) => handleChange("vad", v)}
-                    />
-                    <SettingCheckbox
-                      label="Echo Cancellation"
-                      checked={localSettings.echoCancellation}
-                      onCheckedChange={(v) => handleChange("echoCancellation", v)}
-                    />
-                    <SettingCheckbox
-                      label="Opus 2ch"
-                      checked={localSettings.opus2ch}
-                      onCheckedChange={(v) => handleChange("opus2ch", v)}
-                    />
-                    <SettingCheckbox
-                      label="Force Codec for Incoming"
-                      checked={localSettings.forceCodecForIncoming}
-                      onCheckedChange={(v) => handleChange("forceCodecForIncoming", v)}
-                    />
-                  </div>
                 </div>
               </div>
             </TabsContent>
 
             {/* Video Settings */}
             <TabsContent value="video" className="m-0 p-6">
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <SettingCheckbox
-                    label="Disable Video"
-                    description="Disable all video functionality"
-                    checked={localSettings.disableVideo}
-                    onCheckedChange={(v) => handleChange("disableVideo", v)}
-                  />
+              <div className="max-w-md space-y-4">
+                <SettingCheckbox
+                  label="Disable Video"
+                  description="Disable all video functionality"
+                  checked={localSettings.disableVideo}
+                  onCheckedChange={(v) => handleChange("disableVideo", v)}
+                />
 
-                  {!localSettings.disableVideo && (
-                    <>
-                      <Separator />
-                      <h3 className="font-medium text-sm">Camera</h3>
-                      <SettingRow label="Camera">
-                        <Select
-                          value={localSettings.camera}
-                          onValueChange={(v) => handleChange("camera", v)}
-                        >
-                          <SelectTrigger className="w-48">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="default">Default</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </SettingRow>
+                {!localSettings.disableVideo && (
+                  <>
+                    <Separator />
+                    <h3 className="font-medium text-sm">Camera</h3>
+                    <SettingRow label="Camera">
+                      <Select
+                        value={localSettings.camera}
+                        onValueChange={(v) => handleChange("camera", v)}
+                      >
+                        <SelectTrigger className="w-48">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">Default</SelectItem>
+                          {devices.videoInput.map((device) => (
+                            <SelectItem key={device.deviceId} value={device.deviceId}>
+                              {device.label || `Camera ${device.deviceId.slice(0, 8)}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
 
-                      <Separator />
-                      <h3 className="font-medium text-sm">Video Codec</h3>
-                      <SettingRow label="Codec">
-                        <Select
-                          value={localSettings.videoCodec}
-                          onValueChange={(v) => handleChange("videoCodec", v)}
-                        >
-                          <SelectTrigger className="w-48">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="default">Default</SelectItem>
-                            <SelectItem value="h264">H.264</SelectItem>
-                            <SelectItem value="vp8">VP8</SelectItem>
-                            <SelectItem value="vp9">VP9</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </SettingRow>
-
-                      <div className="flex flex-wrap gap-x-4 gap-y-1">
-                        <SettingCheckbox
-                          label="H.264"
-                          checked={localSettings.enableH264}
-                          onCheckedChange={(v) => handleChange("enableH264", v)}
-                        />
-                        <SettingCheckbox
-                          label="H.263+"
-                          checked={localSettings.enableH263}
-                          onCheckedChange={(v) => handleChange("enableH263", v)}
-                        />
-                        <SettingCheckbox
-                          label="VP8"
-                          checked={localSettings.enableVP8}
-                          onCheckedChange={(v) => handleChange("enableVP8", v)}
-                        />
-                        <SettingCheckbox
-                          label="VP9"
-                          checked={localSettings.enableVP9}
-                          onCheckedChange={(v) => handleChange("enableVP9", v)}
-                        />
-                      </div>
-
-                      <SettingRow label="Video Bitrate">
-                        <Input
-                          className="w-24"
-                          type="number"
-                          value={localSettings.videoBitrate}
-                          onChange={(e) => handleChange("videoBitrate", parseInt(e.target.value) || 256)}
-                        />
-                      </SettingRow>
-                    </>
-                  )}
-                </div>
+                    <Separator />
+                    <h3 className="font-medium text-sm">Quality</h3>
+                    <SettingRow label="Video Bitrate (kbps)">
+                      <Input
+                        className="w-24"
+                        type="number"
+                        value={localSettings.videoBitrate}
+                        onChange={(e) => handleChange("videoBitrate", parseInt(e.target.value) || 256)}
+                      />
+                    </SettingRow>
+                  </>
+                )}
               </div>
             </TabsContent>
 
             {/* Network Settings */}
             <TabsContent value="network" className="m-0 p-6">
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <h3 className="font-medium text-sm">Ports</h3>
-                  <SettingRow label="Source Port">
-                    <Input
-                      className="w-24"
-                      type="number"
-                      placeholder="0"
-                      value={localSettings.sourcePort}
-                      onChange={(e) => handleChange("sourcePort", parseInt(e.target.value) || 0)}
-                    />
-                  </SettingRow>
-                  <SettingCheckbox
-                    label="rport"
-                    description="Use rport extension"
-                    checked={localSettings.rport}
-                    onCheckedChange={(v) => handleChange("rport", v)}
+              <div className="max-w-lg space-y-4">
+                <h3 className="font-medium text-sm">STUN Server</h3>
+                <p className="text-xs text-muted-foreground">
+                  STUN server helps establish peer-to-peer connections through NAT.
+                </p>
+                <SettingRow label="STUN Server">
+                  <Input
+                    className="w-64"
+                    placeholder="stun:server:port"
+                    value={localSettings.stunServer}
+                    onChange={(e) => handleChange("stunServer", e.target.value)}
                   />
-                  <SettingRow label="RTP Ports">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        className="w-20"
-                        type="number"
-                        placeholder="0"
-                        value={localSettings.rtpPortMin}
-                        onChange={(e) => handleChange("rtpPortMin", parseInt(e.target.value) || 0)}
-                      />
-                      <span>-</span>
-                      <Input
-                        className="w-20"
-                        type="number"
-                        placeholder="0"
-                        value={localSettings.rtpPortMax}
-                        onChange={(e) => handleChange("rtpPortMax", parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                  </SettingRow>
-                </div>
+                </SettingRow>
 
-                <div className="space-y-4">
-                  <h3 className="font-medium text-sm">DNS & STUN</h3>
-                  <SettingRow label="Nameserver">
-                    <Input
-                      className="w-48"
-                      placeholder="Optional"
-                      value={localSettings.nameserver}
-                      onChange={(e) => handleChange("nameserver", e.target.value)}
-                    />
-                  </SettingRow>
-                  <SettingCheckbox
-                    label="DNS SRV"
-                    description="Use DNS SRV records"
-                    checked={localSettings.dnsSrv}
-                    onCheckedChange={(v) => handleChange("dnsSrv", v)}
+                <Separator />
+
+                <h3 className="font-medium text-sm">TURN Server</h3>
+                <p className="text-xs text-muted-foreground">
+                  TURN server relays media when direct connection is not possible.
+                </p>
+                <SettingRow label="TURN Server">
+                  <Input
+                    className="w-64"
+                    placeholder="turn:server:port"
+                    value={localSettings.turnServer}
+                    onChange={(e) => handleChange("turnServer", e.target.value)}
                   />
-                  <SettingRow label="STUN Server">
-                    <Input
-                      className="w-48"
-                      placeholder="stun:server:port"
-                      value={localSettings.stunServer}
-                      onChange={(e) => handleChange("stunServer", e.target.value)}
-                    />
-                  </SettingRow>
-                </div>
+                </SettingRow>
+                {localSettings.turnServer && (
+                  <>
+                    <SettingRow label="Username">
+                      <Input
+                        className="w-48"
+                        placeholder="Username"
+                        value={localSettings.turnUsername}
+                        onChange={(e) => handleChange("turnUsername", e.target.value)}
+                      />
+                    </SettingRow>
+                    <SettingRow label="Password">
+                      <Input
+                        className="w-48"
+                        type="password"
+                        placeholder="Password"
+                        value={localSettings.turnPassword}
+                        onChange={(e) => handleChange("turnPassword", e.target.value)}
+                      />
+                    </SettingRow>
+                  </>
+                )}
               </div>
             </TabsContent>
 
             {/* Recording Settings */}
             <TabsContent value="recording" className="m-0 p-6">
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <SettingCheckbox
-                    label="Enable Call Recording"
-                    description="Record calls automatically"
-                    checked={localSettings.callRecording}
-                    onCheckedChange={(v) => handleChange("callRecording", v)}
-                  />
+              <div className="max-w-md space-y-4">
+                <SettingCheckbox
+                  label="Enable Call Recording"
+                  description="Record calls locally in your browser"
+                  checked={localSettings.callRecording}
+                  onCheckedChange={(v) => handleChange("callRecording", v)}
+                />
 
-                  {localSettings.callRecording && (
-                    <>
-                      <SettingRow label="Recording Path">
-                        <Input
-                          className="w-64"
-                          placeholder="C:\Recordings"
-                          value={localSettings.recordingPath}
-                          onChange={(e) => handleChange("recordingPath", e.target.value)}
-                        />
-                      </SettingRow>
-
-                      <SettingRow label="Format">
-                        <div className="flex gap-4">
-                          {["mp3", "wav", "rec"].map((format) => (
-                            <div key={format} className="flex items-center gap-2">
-                              <Checkbox
-                                checked={localSettings.recordingFormat === format}
-                                onCheckedChange={() => handleChange("recordingFormat", format)}
-                              />
-                              <Label className="text-sm uppercase">{format}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </SettingRow>
-                    </>
-                  )}
-                </div>
+                {localSettings.callRecording && (
+                  <>
+                    <Separator />
+                    <SettingRow label="Format">
+                      <Select
+                        value={localSettings.recordingFormat}
+                        onValueChange={(v) => handleChange("recordingFormat", v)}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="webm">WebM</SelectItem>
+                          <SelectItem value="mp3">MP3</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                    <p className="text-xs text-muted-foreground">
+                      Recordings will be downloaded to your browser&apos;s default download folder when the call ends.
+                    </p>
+                  </>
+                )}
               </div>
             </TabsContent>
-
-            {/* UI Settings */}
-            <TabsContent value="ui" className="m-0 p-6">
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-1">
-                  <h3 className="font-medium text-sm mb-3">Interface Options</h3>
-                  <SettingCheckbox
-                    label="Handle Media Buttons"
-                    checked={localSettings.handleMediaButtons}
-                    onCheckedChange={(v) => handleChange("handleMediaButtons", v)}
-                  />
-                  <SettingCheckbox
-                    label="Headset Support"
-                    checked={localSettings.headsetSupport}
-                    onCheckedChange={(v) => handleChange("headsetSupport", v)}
-                  />
-                  <SettingCheckbox
-                    label="Sound Events"
-                    checked={localSettings.soundEvents}
-                    onCheckedChange={(v) => handleChange("soundEvents", v)}
-                  />
-                  <SettingCheckbox
-                    label="Enable Log File"
-                    checked={localSettings.enableLogFile}
-                    onCheckedChange={(v) => handleChange("enableLogFile", v)}
-                  />
-                  <SettingCheckbox
-                    label="Bring to Front on Incoming Call"
-                    checked={localSettings.bringToFrontOnIncoming}
-                    onCheckedChange={(v) => handleChange("bringToFrontOnIncoming", v)}
-                  />
-                  <SettingCheckbox
-                    label="Enable Local Account"
-                    checked={localSettings.enableLocalAccount}
-                    onCheckedChange={(v) => handleChange("enableLocalAccount", v)}
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <h3 className="font-medium text-sm mb-3">System</h3>
-                  <SettingCheckbox
-                    label="Random Popup Position"
-                    checked={localSettings.randomPopupPosition}
-                    onCheckedChange={(v) => handleChange("randomPopupPosition", v)}
-                  />
-                  <SettingCheckbox
-                    label="Send Crash Report"
-                    checked={localSettings.sendCrashReport}
-                    onCheckedChange={(v) => handleChange("sendCrashReport", v)}
-                  />
-                  <SettingCheckbox
-                    label="Disable Messaging"
-                    checked={localSettings.disableMessaging}
-                    onCheckedChange={(v) => handleChange("disableMessaging", v)}
-                  />
-                  <SettingCheckbox
-                    label="Multi Monitor Support"
-                    checked={localSettings.multiMonitorSupport}
-                    onCheckedChange={(v) => handleChange("multiMonitorSupport", v)}
-                  />
-                  <SettingCheckbox
-                    label="Handle IP Changes"
-                    checked={localSettings.handleIpChanges}
-                    onCheckedChange={(v) => handleChange("handleIpChanges", v)}
-                  />
-
-                  <Separator className="my-4" />
-
-                  <SettingRow label="Check for Updates">
-                    <Select
-                      value={localSettings.checkForUpdates}
-                      onValueChange={(v) => handleChange("checkForUpdates", v)}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="never">Never</SelectItem>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </SettingRow>
-
-                  <SettingCheckbox
-                    label="Run at System Startup"
-                    checked={localSettings.runAtStartup}
-                    onCheckedChange={(v) => handleChange("runAtStartup", v)}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-          </ScrollArea>
+          </div>
         </Tabs>
 
-        <DialogFooter className="px-6 py-4 border-t">
+        <DialogFooter className="px-6 py-4 border-t shrink-0">
           <Button variant="outline" onClick={handleReset}>
             Reset to Defaults
           </Button>
