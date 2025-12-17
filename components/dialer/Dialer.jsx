@@ -198,7 +198,7 @@ export default function Dialer() {
                 size="lg"
                 className={cn(
                   "h-16 w-16 rounded-full shadow-lg hover:shadow-xl transition-shadow",
-                  "bg-green-600 hover:bg-green-700",
+                  "bg-primary hover:bg-primary/90 transition",
                   callStatus === CallStatus.RINGING && callDirection === "incoming" && "animate-pulse bg-blue-600 hover:bg-blue-700"
                 )}
                 onClick={toggleDialer}
@@ -229,17 +229,6 @@ export default function Dialer() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Connection Status Indicator */}
-        <motion.div
-          className={cn(
-            "absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-background",
-            isRegistered ? "bg-green-500" : "bg-amber-500"
-          )}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.5 }}
-        />
       </motion.div>
 
       {/* Dialer Panel */}
@@ -278,8 +267,8 @@ export default function Dialer() {
           callStatus === CallStatus.RINGING
             ? "ringing"
             : callStatus === CallStatus.CONNECTING
-            ? "connecting"
-            : "in_call"
+              ? "connecting"
+              : "in_call"
         }
         callerName={null}
         callerNumber={remoteNumber || selectedNumber}
