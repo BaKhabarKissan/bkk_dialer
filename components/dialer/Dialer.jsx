@@ -83,6 +83,9 @@ export default function Dialer() {
     prevCallStatusRef.current = callStatus;
   }, [callStatus, callDirection]);
 
+  // Track call direction for proper status on end
+  const callDirectionRef = useRef(null);
+
   // Call logging
   useEffect(() => {
     // Call started (connecting or ringing)
@@ -90,10 +93,12 @@ export default function Dialer() {
       (callStatus === CallStatus.CONNECTING || callStatus === CallStatus.RINGING) &&
       !currentCallLogRef.current
     ) {
+      const direction = callDirection || "outgoing";
+      callDirectionRef.current = direction;
       const log = addLog({
         number: remoteNumber || selectedNumber,
-        direction: callDirection || "outgoing",
-        status: callStatus === CallStatus.RINGING && callDirection === "incoming" ? "ringing" : "connecting",
+        direction: direction,
+        status: callStatus === CallStatus.RINGING && direction === "incoming" ? "ringing" : "connecting",
         info: "",
       });
       currentCallLogRef.current = log.id;
@@ -113,13 +118,23 @@ export default function Dialer() {
         ? Math.floor((Date.now() - callStartTimeRef.current) / 1000)
         : 0;
 
+      let finalStatus;
+      if (duration > 0) {
+        finalStatus = "completed";
+      } else if (callDirectionRef.current === "incoming") {
+        finalStatus = "missed";
+      } else {
+        finalStatus = "no_answer";
+      }
+
       updateLog(currentCallLogRef.current, {
         duration,
-        status: duration > 0 ? "completed" : "missed",
+        status: finalStatus,
       });
 
       currentCallLogRef.current = null;
       callStartTimeRef.current = null;
+      callDirectionRef.current = null;
     }
   }, [callStatus, callDirection, remoteNumber, selectedNumber, addLog, updateLog]);
 

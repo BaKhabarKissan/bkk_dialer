@@ -100,8 +100,31 @@ function getStatusBadge(status) {
           Failed
         </Badge>
       );
+    case "no_answer":
+    case "connecting":
+      return (
+        <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
+          No Answer
+        </Badge>
+      );
+    case "ringing":
+      return (
+        <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
+          Cancelled
+        </Badge>
+      );
+    case "in_progress":
+      return (
+        <Badge variant="outline" className="text-xs bg-cyan-500/10 text-cyan-600 border-cyan-500/30">
+          In Progress
+        </Badge>
+      );
     default:
-      return null;
+      return (
+        <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+          Unknown
+        </Badge>
+      );
   }
 }
 
