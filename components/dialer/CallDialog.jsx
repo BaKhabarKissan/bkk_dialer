@@ -60,6 +60,7 @@ export default function CallDialog({
   isMuted = false,
   isSpeakerMuted = false,
   isRecording = false,
+  recordingEnabled = false,
 }) {
   const [callDuration, setCallDuration] = useState(0);
   const [pulseIndex, setPulseIndex] = useState(0);
@@ -404,19 +405,21 @@ export default function CallDialog({
                     </Button>
                   </motion.div>
 
-                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      size="lg"
-                      variant={isRecording ? "default" : "outline"}
-                      className={cn(
-                        "h-14 w-14 rounded-full shadow-lg",
-                        isRecording && "bg-destructive hover:bg-destructive/90"
-                      )}
-                      onClick={onToggleRecording}
-                    >
-                      <Circle className={cn("w-6 h-6", isRecording && "fill-current animate-pulse")} />
-                    </Button>
-                  </motion.div>
+                  {recordingEnabled && (
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                      <Button
+                        size="lg"
+                        variant={isRecording ? "default" : "outline"}
+                        className={cn(
+                          "h-14 w-14 rounded-full shadow-lg",
+                          isRecording && "bg-destructive hover:bg-destructive/90"
+                        )}
+                        onClick={onToggleRecording}
+                      >
+                        <Circle className={cn("w-6 h-6", isRecording && "fill-current animate-pulse")} />
+                      </Button>
+                    </motion.div>
+                  )}
 
                   <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
                     <Button

@@ -282,6 +282,7 @@ export default function Dialer() {
           toggleHold,
           toggleRecording,
           sendDTMF,
+          recordingEnabled: settings.callRecording,
         }}
       />
 
@@ -311,6 +312,7 @@ export default function Dialer() {
         isMuted={isMuted}
         isSpeakerMuted={isSpeakerMuted}
         isRecording={isRecording}
+        recordingEnabled={settings.callRecording}
       />
     </div>
   );

@@ -66,6 +66,7 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
     toggleHold,
     toggleRecording,
     sendDTMF,
+    recordingEnabled,
   } = sipState;
 
   const dialClickSound = useRef(null);
@@ -293,7 +294,7 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
                         DND
                       </Badge>
                     )}
-                    {isRecording && isInCall && (
+                    {recordingEnabled && isRecording && isInCall && (
                       <div className="flex items-center gap-1 text-destructive">
                         <Circle className="w-3 h-3 fill-destructive animate-pulse" />
                         <span className="text-xs">REC</span>
@@ -341,17 +342,19 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
                     {isOnHold ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
                     {isOnHold ? "Resume" : "Hold"}
                   </Button>
-                  <Button
-                    variant={isRecording ? "default" : "outline"}
-                    className={cn(
-                      "flex-1 gap-1 h-9 text-sm",
-                      isRecording && "bg-destructive hover:bg-destructive/90"
-                    )}
-                    onClick={toggleRecording}
-                  >
-                    <Circle className={cn("w-3 h-3", isRecording && "fill-current")} />
-                    {isRecording ? "Stop" : "Rec"}
-                  </Button>
+                  {recordingEnabled && (
+                    <Button
+                      variant={isRecording ? "default" : "outline"}
+                      className={cn(
+                        "flex-1 gap-1 h-9 text-sm",
+                        isRecording && "bg-destructive hover:bg-destructive/90"
+                      )}
+                      onClick={toggleRecording}
+                    >
+                      <Circle className={cn("w-3 h-3", isRecording && "fill-current")} />
+                      {isRecording ? "Stop" : "Rec"}
+                    </Button>
+                  )}
                 </div>
               )}
 
