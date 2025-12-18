@@ -110,16 +110,24 @@ export default function ContactsSidebar({ onCallNumber }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState(null);
+  const [isMediumScreen, setIsMediumScreen] = useState(false);
 
-  // Auto-collapse on medium screens
+  // Auto-collapse on medium screens and track screen size
   useEffect(() => {
     const handleResize = () => {
-      setIsCollapsed(window.innerWidth < 1024);
+      const isMedium = window.innerWidth < 1024;
+      setIsMediumScreen(isMedium);
+      if (isMedium) {
+        setIsCollapsed(true);
+      }
     };
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Overlay mode: on medium screen when expanded
+  const isOverlay = isMediumScreen && !isCollapsed;
 
   const handleAddContact = (data) => {
     addContact(data);
@@ -134,12 +142,29 @@ export default function ContactsSidebar({ onCallNumber }) {
   };
 
   return (
-    <motion.div
-      initial={false}
-      animate={{ width: isCollapsed ? 64 : 320 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
-      className="h-full border-r border-border bg-sidebar flex flex-col relative"
-    >
+    <>
+      {/* Backdrop for overlay mode */}
+      <AnimatePresence>
+        {isOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setIsCollapsed(true)}
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.div
+        initial={false}
+        animate={{ width: isCollapsed ? 64 : 320 }}
+        transition={{ duration: 0.2, ease: "easeInOut" }}
+        className={cn(
+          "h-full border-r border-border bg-sidebar flex flex-col",
+          isOverlay ? "fixed left-0 top-0 z-50 shadow-2xl" : "relative"
+        )}
+      >
       {/* Collapse Toggle Button */}
       <Button
         variant="ghost"
@@ -402,5 +427,6 @@ export default function ContactsSidebar({ onCallNumber }) {
       </div>
       </div>
     </motion.div>
+    </>
   );
 }
