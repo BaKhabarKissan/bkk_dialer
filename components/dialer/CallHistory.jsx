@@ -188,7 +188,7 @@ function CallLogItem({ log, onCall, onDelete, onPlayRecording, onDownloadRecordi
             </div>
 
             {/* Status Badge - Always visible */}
-            <div className="shrink-0">
+            <div className="shrink-0 md:block hidden">
               {getStatusBadge(log.status)}
             </div>
           </div>
