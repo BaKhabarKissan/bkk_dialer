@@ -411,12 +411,13 @@ export default function CallDialog({
                         size="lg"
                         variant={isRecording ? "default" : "outline"}
                         className={cn(
-                          "h-14 w-14 rounded-full shadow-lg",
+                          "h-14 px-4 rounded-full shadow-lg gap-1",
                           isRecording && "bg-destructive hover:bg-destructive/90"
                         )}
                         onClick={onToggleRecording}
                       >
-                        <Circle className={cn("w-6 h-6", isRecording && "fill-current animate-pulse")} />
+                        <Circle className={cn("w-3 h-3", isRecording && "fill-current animate-pulse")} />
+                        <span className="text-sm font-medium">REC</span>
                       </Button>
                     </motion.div>
                   )}
