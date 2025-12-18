@@ -26,7 +26,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   Settings as SettingsIcon,
   Volume2,
-  Video,
   Network,
   Phone,
   HardDrive,
@@ -154,7 +153,6 @@ export default function Settings({ trigger }) {
   const [devices, setDevices] = useState({
     audioInput: [],
     audioOutput: [],
-    videoInput: [],
   });
   const [isPlayingRingtone, setIsPlayingRingtone] = useState(false);
   const audioRef = useRef(null);
@@ -164,7 +162,7 @@ export default function Settings({ trigger }) {
     async function enumerateDevices() {
       try {
         // Request permission first to get device labels
-        await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(stream => {
+        await navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
           stream.getTracks().forEach(track => track.stop());
         }).catch(() => {
           // Permission denied, continue with limited device info
@@ -174,7 +172,6 @@ export default function Settings({ trigger }) {
         setDevices({
           audioInput: deviceList.filter(d => d.kind === "audioinput"),
           audioOutput: deviceList.filter(d => d.kind === "audiooutput"),
-          videoInput: deviceList.filter(d => d.kind === "videoinput"),
         });
       } catch (error) {
         console.error("Failed to enumerate devices:", error);
@@ -274,10 +271,6 @@ export default function Settings({ trigger }) {
               <Volume2 className="w-4 h-4" />
               Audio
             </TabsTrigger>
-            <TabsTrigger value="video">
-              <Video className="w-4 h-4" />
-              Video
-            </TabsTrigger>
             <TabsTrigger value="network">
               <Network className="w-4 h-4" />
               Network
@@ -293,24 +286,6 @@ export default function Settings({ trigger }) {
             <TabsContent value="call" className="m-0 p-6">
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h3 className="font-medium text-sm">Call Behavior</h3>
-                  <div className="space-y-1">
-                    <SettingCheckbox
-                      label="Single Call Mode"
-                      description="Only allow one active call at a time"
-                      checked={localSettings.singleCallMode}
-                      onCheckedChange={(v) => handleChange("singleCallMode", v)}
-                    />
-                    <SettingCheckbox
-                      label="Call Waiting"
-                      description="Allow incoming calls while on another call"
-                      checked={localSettings.callWaiting}
-                      onCheckedChange={(v) => handleChange("callWaiting", v)}
-                    />
-                  </div>
-
-                  <Separator />
-
                   <h3 className="font-medium text-sm">Auto Answer</h3>
                   <SettingRow label="Auto Answer">
                     <Select
@@ -351,69 +326,6 @@ export default function Settings({ trigger }) {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="font-medium text-sm">Call Forwarding</h3>
-                  <SettingRow label="Forwarding">
-                    <Select
-                      value={localSettings.callForwarding}
-                      onValueChange={(v) => handleChange("callForwarding", v)}
-                    >
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="off">Off</SelectItem>
-                        <SelectItem value="always">Always</SelectItem>
-                        <SelectItem value="busy">When Busy</SelectItem>
-                        <SelectItem value="no-answer">No Answer</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </SettingRow>
-
-                  {localSettings.callForwarding !== "off" && (
-                    <>
-                      <SettingRow label="Forward To">
-                        <Input
-                          className="w-40"
-                          placeholder="Number"
-                          value={localSettings.callForwardingNumber}
-                          onChange={(e) => handleChange("callForwardingNumber", e.target.value)}
-                        />
-                      </SettingRow>
-                      {localSettings.callForwarding === "no-answer" && (
-                        <SettingRow label="Delay (sec)">
-                          <Input
-                            className="w-20"
-                            type="number"
-                            value={localSettings.callForwardingDelay}
-                            onChange={(e) => handleChange("callForwardingDelay", parseInt(e.target.value) || 0)}
-                          />
-                        </SettingRow>
-                      )}
-                    </>
-                  )}
-
-                  <Separator />
-
-                  <h3 className="font-medium text-sm">Deny Incoming</h3>
-                  <SettingRow label="Deny Incoming">
-                    <Select
-                      value={localSettings.denyIncoming}
-                      onValueChange={(v) => handleChange("denyIncoming", v)}
-                    >
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="off">Off</SelectItem>
-                        <SelectItem value="all">All Calls</SelectItem>
-                        <SelectItem value="anonymous">Anonymous</SelectItem>
-                        <SelectItem value="not-in-contacts">Not in Contacts</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </SettingRow>
-
-                  <Separator />
-
                   <h3 className="font-medium text-sm">Interface</h3>
                   <div className="space-y-1">
                     <SettingCheckbox
@@ -555,54 +467,6 @@ export default function Settings({ trigger }) {
                     onMove={handleCodecMove}
                   />
                 </div>
-              </div>
-            </TabsContent>
-
-            {/* Video Settings */}
-            <TabsContent value="video" className="m-0 p-6">
-              <div className="max-w-md space-y-4">
-                <SettingCheckbox
-                  label="Disable Video"
-                  description="Disable all video functionality"
-                  checked={localSettings.disableVideo}
-                  onCheckedChange={(v) => handleChange("disableVideo", v)}
-                />
-
-                {!localSettings.disableVideo && (
-                  <>
-                    <Separator />
-                    <h3 className="font-medium text-sm">Camera</h3>
-                    <SettingRow label="Camera">
-                      <Select
-                        value={localSettings.camera}
-                        onValueChange={(v) => handleChange("camera", v)}
-                      >
-                        <SelectTrigger className="w-48">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="default">Default</SelectItem>
-                          {devices.videoInput.map((device) => (
-                            <SelectItem key={device.deviceId} value={device.deviceId}>
-                              {device.label || `Camera ${device.deviceId.slice(0, 8)}`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </SettingRow>
-
-                    <Separator />
-                    <h3 className="font-medium text-sm">Quality</h3>
-                    <SettingRow label="Video Bitrate (kbps)">
-                      <Input
-                        className="w-24"
-                        type="number"
-                        value={localSettings.videoBitrate}
-                        onChange={(e) => handleChange("videoBitrate", parseInt(e.target.value) || 256)}
-                      />
-                    </SettingRow>
-                  </>
-                )}
               </div>
             </TabsContent>
 
