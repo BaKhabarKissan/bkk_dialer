@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,6 +110,16 @@ export default function ContactsSidebar({ onCallNumber }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState(null);
+
+  // Auto-collapse on medium screens
+  useEffect(() => {
+    const handleResize = () => {
+      setIsCollapsed(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleAddContact = (data) => {
     addContact(data);
