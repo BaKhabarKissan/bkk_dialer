@@ -145,50 +145,64 @@ function CallLogItem({ log, onCall, onDelete, onPlayRecording, onDownloadRecordi
       exit={{ opacity: 0, x: -100 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-      <Card className="p-2 hover:bg-accent/50 transition-colors group">
-        <div className="flex items-center gap-4">
-          {/* Call Icon */}
-          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-            {getCallIcon(log.direction, log.status)}
+      <Card className="p-2 sm:p-3 hover:bg-accent/50 transition-colors group">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+          {/* Top Row - Icon, Details, Status */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+            {/* Call Icon */}
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+              {getCallIcon(log.direction, log.status)}
+            </div>
+
+            {/* Call Details */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-medium truncate text-sm sm:text-base">
+                  {log.name || log.number || "Unknown"}
+                </p>
+                {/* Recording Badge - Mobile inline */}
+                {hasRecording && (
+                  <Badge variant="outline" className="sm:hidden text-[10px] px-1.5 py-0 bg-destructive/10 text-destructive border-destructive/30 gap-0.5">
+                    <Mic className="w-2.5 h-2.5" />
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 sm:gap-3 text-muted-foreground text-[10px] sm:text-xs flex-wrap">
+                {log.name && log.number && (
+                  <>
+                    <span className="truncate max-w-[100px] sm:max-w-none">{log.number}</span>
+                    <Dot className="hidden sm:block" />
+                  </>
+                )}
+                <span className="flex items-center gap-1">
+                  <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                  {formatTime(log.time)}
+                </span>
+                {log.duration > 0 && (
+                  <>
+                    <Dot className="hidden sm:block" />
+                    <span>{formatDuration(log.duration)}</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Status Badge - Always visible */}
+            <div className="shrink-0">
+              {getStatusBadge(log.status)}
+            </div>
           </div>
 
-          {/* Call Details */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="font-medium truncate">
-                {log.name || log.number || "Unknown"}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 text-muted-foreground text-xs">
-              {log.name && log.number && (
-                <span className="truncate">{log.number}</span>
-              )}
-              <Dot />
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {formatTime(log.time)}
-              </span>
-              {log.status === "completed" && <Dot />}
-              {log.duration > 0 && (
-                <span>{formatDuration(log.duration)}</span>
-              )}
-            </div>
-          </div>
-
-          {/* Recording Badge */}
+          {/* Recording Badge - Desktop */}
           {hasRecording && (
-            <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
+            <Badge variant="outline" className="hidden sm:flex text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1 shrink-0">
               <Mic className="w-3 h-3" />
               Recorded
             </Badge>
           )}
 
-          <div className="px-4">
-            {getStatusBadge(log.status)}
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Actions - Always visible on mobile, hover on desktop */}
+          <div className="flex items-center gap-1 sm:gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ml-11 sm:ml-0">
             {/* Recording Playback Controls */}
             {hasRecording && (
               <>
@@ -196,38 +210,38 @@ function CallLogItem({ log, onCall, onDelete, onPlayRecording, onDownloadRecordi
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    "h-8 w-8",
+                    "h-7 w-7 sm:h-8 sm:w-8",
                     isPlaying ? "text-destructive hover:text-red-600 hover:bg-destructive/10" : "text-primary hover:text-primary hover:bg-primary/10"
                   )}
                   onClick={() => onPlayRecording(log.recordingId)}
                 >
-                  {isPlaying ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  {isPlaying ? <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-500/10"
+                  className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-500/10"
                   onClick={() => onDownloadRecording(log.recordingId, log.number, log.time)}
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
               </>
             )}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-500/10"
+              className="h-7 w-7 sm:h-8 sm:w-8 text-green-600 hover:text-green-700 hover:bg-green-500/10"
               onClick={() => onCall(log.number)}
             >
-              <Phone className="w-4 h-4" />
+              <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={() => onDelete(log.id, log.recordingId)}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
           </div>
         </div>
