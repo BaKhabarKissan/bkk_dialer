@@ -410,7 +410,7 @@ export default function CallDialog({
                       variant={isRecording ? "default" : "outline"}
                       className={cn(
                         "h-14 w-14 rounded-full shadow-lg",
-                        isRecording && "bg-red-500 hover:bg-red-500/90"
+                        isRecording && "bg-destructive hover:bg-destructive/90"
                       )}
                       onClick={onToggleRecording}
                     >

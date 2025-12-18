@@ -71,7 +71,7 @@ function getDateKey(isoString) {
 // Get call icon based on direction and status
 function getCallIcon(direction, status) {
   if (status === "missed" || status === "rejected") {
-    return <PhoneMissed className="w-4 h-4 text-red-500" />;
+    return <PhoneMissed className="w-4 h-4 text-destructive" />;
   }
   if (direction === "incoming") {
     return <PhoneIncoming className="w-4 h-4 text-green-500" />;
@@ -90,7 +90,7 @@ function getStatusBadge(status) {
       );
     case "missed":
       return (
-        <Badge variant="outline" className="text-xs bg-red-500/10 text-red-500 border-red-500/30">
+        <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30">
           Missed
         </Badge>
       );
@@ -177,7 +177,7 @@ function CallLogItem({ log, onCall, onDelete, onPlayRecording, onDownloadRecordi
 
           {/* Recording Badge */}
           {hasRecording && (
-            <Badge variant="outline" className="text-xs bg-red-500/10 text-red-500 border-red-500/30 gap-1">
+            <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
               <Mic className="w-3 h-3" />
               Recorded
             </Badge>
@@ -197,7 +197,7 @@ function CallLogItem({ log, onCall, onDelete, onPlayRecording, onDownloadRecordi
                   size="icon"
                   className={cn(
                     "h-8 w-8",
-                    isPlaying ? "text-red-500 hover:text-red-600 hover:bg-red-500/10" : "text-primary hover:text-primary hover:bg-primary/10"
+                    isPlaying ? "text-destructive hover:text-red-600 hover:bg-destructive/10" : "text-primary hover:text-primary hover:bg-primary/10"
                   )}
                   onClick={() => onPlayRecording(log.recordingId)}
                 >

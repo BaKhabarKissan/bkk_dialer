@@ -74,7 +74,7 @@ function formatTime(isoString) {
 // Get icon based on call direction/status
 function CallIcon({ direction, status }) {
   if (status === "missed" || status === "rejected") {
-    return <PhoneMissed className="w-4 h-4 text-red-500" />;
+    return <PhoneMissed className="w-4 h-4 text-destructive" />;
   }
   if (direction === "incoming") {
     return <PhoneIncoming className="w-4 h-4 text-blue-500" />;
@@ -86,9 +86,9 @@ function CallIcon({ direction, status }) {
 function StatusBadge({ status }) {
   const variants = {
     completed: "bg-green-500/10 text-green-600 border-green-500/30",
-    missed: "bg-red-500/10 text-red-500 border-red-500/30",
+    missed: "bg-destructive/10 text-destructive border-destructive/30",
     rejected: "bg-amber-500/10 text-amber-600 border-amber-500/30",
-    failed: "bg-red-500/10 text-red-500 border-red-500/30",
+    failed: "bg-destructive/10 text-destructive border-destructive/30",
   };
 
   return (

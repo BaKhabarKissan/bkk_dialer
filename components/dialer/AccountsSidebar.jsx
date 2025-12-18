@@ -571,7 +571,7 @@ export default function AccountsSidebar({
                 {activeAccountId && (
                   <div className={cn(
                     "w-3 h-3 rounded-full",
-                    isRegistered ? "bg-green-500" : "bg-red-500"
+                    isRegistered ? "bg-green-500" : "bg-destructive"
                   )} />
                 )}
               </motion.div>
