@@ -31,6 +31,7 @@ import {
   HardDrive,
   Play,
   Square,
+  PhoneForwarded,
 } from "lucide-react";
 import { useSettings } from "@/lib/store/hooks";
 import { availableCodecs, defaultSettings } from "@/lib/store/settingsSlice";
@@ -323,6 +324,67 @@ export default function Settings({ trigger }) {
                       </SelectContent>
                     </Select>
                   </SettingRow>
+
+                  <Separator />
+
+                  <h3 className="font-medium text-sm flex items-center gap-2">
+                    <PhoneForwarded className="w-4 h-4" />
+                    Call Forwarding
+                  </h3>
+                  <SettingCheckbox
+                    label="Enable Call Forwarding"
+                    description="Forward incoming calls to another number"
+                    checked={localSettings.callForwardingEnabled}
+                    onCheckedChange={(v) => handleChange("callForwardingEnabled", v)}
+                  />
+                  {localSettings.callForwardingEnabled && (
+                    <>
+                      <SettingRow label="Forward When">
+                        <Select
+                          value={localSettings.callForwardingType}
+                          onValueChange={(v) => handleChange("callForwardingType", v)}
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="always">Always</SelectItem>
+                            <SelectItem value="busy">When Busy</SelectItem>
+                            <SelectItem value="noanswer">No Answer</SelectItem>
+                            <SelectItem value="unreachable">Unreachable</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </SettingRow>
+                      <SettingRow label="Forward To">
+                        <Input
+                          className="w-40"
+                          placeholder="Phone number"
+                          value={localSettings.callForwardingNumber}
+                          onChange={(e) => handleChange("callForwardingNumber", e.target.value)}
+                        />
+                      </SettingRow>
+                      {localSettings.callForwardingType === "noanswer" && (
+                        <SettingRow label="Delay (seconds)">
+                          <Select
+                            value={String(localSettings.callForwardingNoAnswerDelay)}
+                            onValueChange={(v) => handleChange("callForwardingNoAnswerDelay", parseInt(v))}
+                          >
+                            <SelectTrigger className="w-40">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="10">10 seconds</SelectItem>
+                              <SelectItem value="15">15 seconds</SelectItem>
+                              <SelectItem value="20">20 seconds</SelectItem>
+                              <SelectItem value="30">30 seconds</SelectItem>
+                              <SelectItem value="45">45 seconds</SelectItem>
+                              <SelectItem value="60">60 seconds</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </SettingRow>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-4">
