@@ -34,7 +34,7 @@ import {
   Square,
 } from "lucide-react";
 import { useSettings } from "@/lib/store/hooks";
-import { availableCodecs } from "@/lib/store/settingsSlice";
+import { availableCodecs, defaultSettings } from "@/lib/store/settingsSlice";
 import { cn } from "@/lib/utils";
 
 function SettingRow({ label, children, className }) {
@@ -247,7 +247,7 @@ export default function Settings({ trigger }) {
 
   const handleReset = () => {
     resetSettings();
-    setLocalSettings(settings);
+    setLocalSettings(defaultSettings);
   };
 
   return (
