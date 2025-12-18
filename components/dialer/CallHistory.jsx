@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,13 @@ import {
   Trash2,
   Calendar,
   Dot,
+  Play,
+  Square,
+  Download,
+  Mic,
 } from "lucide-react";
 import { useCallLogs } from "@/lib/store/hooks";
+import { getRecording, downloadRecording, deleteRecording } from "@/lib/recordingsStorage";
 
 // Helper to format duration
 function formatDuration(seconds) {
@@ -129,7 +134,10 @@ function getStatusBadge(status) {
   }
 }
 
-function CallLogItem({ log, onCall, onDelete, index }) {
+function CallLogItem({ log, onCall, onDelete, onPlayRecording, onDownloadRecording, playingRecordingId, index }) {
+  const hasRecording = !!log.recordingId;
+  const isPlaying = playingRecordingId === log.recordingId;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -151,7 +159,7 @@ function CallLogItem({ log, onCall, onDelete, index }) {
                 {log.name || log.number || "Unknown"}
               </p>
             </div>
-            <div className="flex items-center gap-3text-muted-foreground text-xs">
+            <div className="flex items-center gap-3 text-muted-foreground text-xs">
               {log.name && log.number && (
                 <span className="truncate">{log.number}</span>
               )}
@@ -166,11 +174,45 @@ function CallLogItem({ log, onCall, onDelete, index }) {
               )}
             </div>
           </div>
+
+          {/* Recording Badge */}
+          {hasRecording && (
+            <Badge variant="outline" className="text-xs bg-red-500/10 text-red-500 border-red-500/30 gap-1">
+              <Mic className="w-3 h-3" />
+              Recorded
+            </Badge>
+          )}
+
           <div className="px-4">
             {getStatusBadge(log.status)}
           </div>
+
           {/* Actions */}
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Recording Playback Controls */}
+            {hasRecording && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-8 w-8",
+                    isPlaying ? "text-red-500 hover:text-red-600 hover:bg-red-500/10" : "text-primary hover:text-primary hover:bg-primary/10"
+                  )}
+                  onClick={() => onPlayRecording(log.recordingId)}
+                >
+                  {isPlaying ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-500/10"
+                  onClick={() => onDownloadRecording(log.recordingId, log.number, log.time)}
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              </>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -183,7 +225,7 @@ function CallLogItem({ log, onCall, onDelete, index }) {
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => onDelete(log.id)}
+              onClick={() => onDelete(log.id, log.recordingId)}
             >
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -194,7 +236,7 @@ function CallLogItem({ log, onCall, onDelete, index }) {
   );
 }
 
-function DateGroup({ label, logs, onCall, onDelete }) {
+function DateGroup({ label, logs, onCall, onDelete, onPlayRecording, onDownloadRecording, playingRecordingId }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -219,6 +261,9 @@ function DateGroup({ label, logs, onCall, onDelete }) {
               log={log}
               onCall={onCall}
               onDelete={onDelete}
+              onPlayRecording={onPlayRecording}
+              onDownloadRecording={onDownloadRecording}
+              playingRecordingId={playingRecordingId}
               index={index}
             />
           ))}
@@ -230,6 +275,20 @@ function DateGroup({ label, logs, onCall, onDelete }) {
 
 export default function CallHistory({ onCallNumber }) {
   const { logs, deleteLog, clearLogs } = useCallLogs();
+  const [playingRecordingId, setPlayingRecordingId] = useState(null);
+  const audioRef = useRef(null);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        if (audioRef.current.src) {
+          URL.revokeObjectURL(audioRef.current.src);
+        }
+      }
+    };
+  }, []);
 
   // Group logs by date
   const groupedLogs = useMemo(() => {
@@ -255,6 +314,87 @@ export default function CallHistory({ onCallNumber }) {
     if (number && onCallNumber) {
       onCallNumber(number);
     }
+  };
+
+  // Handle recording playback
+  const handlePlayRecording = async (recordingId) => {
+    // Stop current playback if playing the same recording
+    if (playingRecordingId === recordingId) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        if (audioRef.current.src) {
+          URL.revokeObjectURL(audioRef.current.src);
+        }
+      }
+      setPlayingRecordingId(null);
+      return;
+    }
+
+    // Stop any current playback
+    if (audioRef.current) {
+      audioRef.current.pause();
+      if (audioRef.current.src) {
+        URL.revokeObjectURL(audioRef.current.src);
+      }
+    }
+
+    try {
+      const recording = await getRecording(recordingId);
+      if (!recording || !recording.blob) {
+        console.error("Recording not found:", recordingId);
+        return;
+      }
+
+      const url = URL.createObjectURL(recording.blob);
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      }
+      audioRef.current.src = url;
+      audioRef.current.onended = () => {
+        URL.revokeObjectURL(url);
+        setPlayingRecordingId(null);
+      };
+      audioRef.current.play();
+      setPlayingRecordingId(recordingId);
+    } catch (err) {
+      console.error("Failed to play recording:", err);
+    }
+  };
+
+  // Handle recording download
+  const handleDownloadRecording = async (recordingId, number, time) => {
+    try {
+      const recording = await getRecording(recordingId);
+      if (!recording || !recording.blob) {
+        console.error("Recording not found:", recordingId);
+        return;
+      }
+
+      const dateStr = new Date(time).toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      const filename = `call_${number || "unknown"}_${dateStr}.webm`;
+      downloadRecording(recording.blob, filename);
+    } catch (err) {
+      console.error("Failed to download recording:", err);
+    }
+  };
+
+  // Handle delete with recording cleanup
+  const handleDelete = async (logId, recordingId) => {
+    if (recordingId) {
+      try {
+        // Stop playback if playing this recording
+        if (playingRecordingId === recordingId) {
+          if (audioRef.current) {
+            audioRef.current.pause();
+          }
+          setPlayingRecordingId(null);
+        }
+        await deleteRecording(recordingId);
+      } catch (err) {
+        console.error("Failed to delete recording:", err);
+      }
+    }
+    deleteLog(logId);
   };
 
   if (logs.length === 0) {
@@ -312,7 +452,10 @@ export default function CallHistory({ onCallNumber }) {
               label={group.label}
               logs={group.logs}
               onCall={handleCall}
-              onDelete={deleteLog}
+              onDelete={handleDelete}
+              onPlayRecording={handlePlayRecording}
+              onDownloadRecording={handleDownloadRecording}
+              playingRecordingId={playingRecordingId}
             />
           ))}
         </div>

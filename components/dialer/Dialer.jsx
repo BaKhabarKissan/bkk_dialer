@@ -24,6 +24,7 @@ export default function Dialer() {
 
   const currentCallLogRef = useRef(null);
   const callStartTimeRef = useRef(null);
+  const pendingRecordingLogIdRef = useRef(null);
 
   // Pass settings to useSip hook for full integration
   const sip = useSip(config, settings);
@@ -49,7 +50,20 @@ export default function Dialer() {
     toggleHold,
     sendDTMF,
     toggleRecording,
+    setOnRecordingSaved,
   } = sip;
+
+  // Set up recording saved callback to link recording with call log
+  useEffect(() => {
+    setOnRecordingSaved((recordingId) => {
+      // Use pendingRecordingLogIdRef if currentCallLogRef is already cleared (async timing issue)
+      const logId = currentCallLogRef.current || pendingRecordingLogIdRef.current;
+      if (logId) {
+        updateLog(logId, { recordingId });
+      }
+      pendingRecordingLogIdRef.current = null;
+    });
+  }, [setOnRecordingSaved, updateLog]);
 
   const hasInitialConnectRef = useRef(false);
 
@@ -131,6 +145,8 @@ export default function Dialer() {
         status: finalStatus,
       });
 
+      // Store log ID for async recording save callback (recording saves after call ends)
+      pendingRecordingLogIdRef.current = currentCallLogRef.current;
       currentCallLogRef.current = null;
       callStartTimeRef.current = null;
       callDirectionRef.current = null;

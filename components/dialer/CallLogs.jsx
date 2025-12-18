@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -25,9 +26,19 @@ import {
   Trash2,
   History,
   Phone,
+  Play,
+  Pause,
+  Download,
+  Square,
 } from "lucide-react";
 import { useCallLogs } from "@/lib/store/hooks";
 import { cn } from "@/lib/utils";
+import {
+  getRecording,
+  createPlaybackUrl,
+  revokePlaybackUrl,
+  downloadRecording,
+} from "@/lib/recordingsStorage";
 
 // Format duration from seconds to mm:ss or hh:mm:ss
 function formatDuration(seconds) {
@@ -63,7 +74,7 @@ function formatTime(isoString) {
 // Get icon based on call direction/status
 function CallIcon({ direction, status }) {
   if (status === "missed" || status === "rejected") {
-    return <PhoneMissed className="w-4 h-4 text-destructive" />;
+    return <PhoneMissed className="w-4 h-4 text-red-500" />;
   }
   if (direction === "incoming") {
     return <PhoneIncoming className="w-4 h-4 text-blue-500" />;
@@ -75,15 +86,155 @@ function CallIcon({ direction, status }) {
 function StatusBadge({ status }) {
   const variants = {
     completed: "bg-green-500/10 text-green-600 border-green-500/30",
-    missed: "bg-destructive/10 text-destructive border-destructive/30",
+    missed: "bg-red-500/10 text-red-500 border-red-500/30",
     rejected: "bg-amber-500/10 text-amber-600 border-amber-500/30",
-    failed: "bg-destructive/10 text-destructive border-destructive/30",
+    failed: "bg-red-500/10 text-red-500 border-red-500/30",
   };
 
   return (
     <Badge variant="outline" className={cn("text-xs", variants[status] || "")}>
       {status}
     </Badge>
+  );
+}
+
+// Recording player component
+function RecordingPlayer({ recordingId, callTime }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef(null);
+  const urlRef = useRef(null);
+
+  const loadAndPlay = useCallback(async () => {
+    if (!recordingId) return;
+
+    setIsLoading(true);
+    try {
+      const recording = await getRecording(recordingId);
+      if (!recording) {
+        console.error("Recording not found");
+        setIsLoading(false);
+        return;
+      }
+
+      // Revoke previous URL if exists
+      if (urlRef.current) {
+        revokePlaybackUrl(urlRef.current);
+      }
+
+      // Create new URL
+      const url = createPlaybackUrl(recording.blob);
+      urlRef.current = url;
+
+      // Create or reuse audio element
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+        audioRef.current.onended = () => setIsPlaying(false);
+        audioRef.current.ontimeupdate = () => {
+          setCurrentTime(Math.floor(audioRef.current.currentTime));
+        };
+        audioRef.current.onloadedmetadata = () => {
+          setDuration(Math.floor(audioRef.current.duration));
+        };
+      }
+
+      audioRef.current.src = url;
+      await audioRef.current.play();
+      setIsPlaying(true);
+    } catch (err) {
+      console.error("Failed to play recording:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [recordingId]);
+
+  const togglePlayPause = useCallback(() => {
+    if (!audioRef.current || !audioRef.current.src) {
+      loadAndPlay();
+      return;
+    }
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  }, [isPlaying, loadAndPlay]);
+
+  const stop = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsPlaying(false);
+      setCurrentTime(0);
+    }
+  }, []);
+
+  const handleDownload = useCallback(async () => {
+    try {
+      const recording = await getRecording(recordingId);
+      if (recording) {
+        const filename = `call_${new Date(callTime).toISOString().replace(/[:.]/g, "-")}.webm`;
+        downloadRecording(recording.blob, filename);
+      }
+    } catch (err) {
+      console.error("Failed to download recording:", err);
+    }
+  }, [recordingId, callTime]);
+
+  // Format time as mm:ss
+  const formatPlayTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
+        onClick={togglePlayPause}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        ) : isPlaying ? (
+          <Pause className="w-3 h-3" />
+        ) : (
+          <Play className="w-3 h-3" />
+        )}
+      </Button>
+      {isPlaying && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={stop}
+        >
+          <Square className="w-3 h-3" />
+        </Button>
+      )}
+      {(isPlaying || currentTime > 0) && (
+        <span className="text-xs text-muted-foreground font-mono min-w-15">
+          {formatPlayTime(currentTime)}{duration > 0 ? ` / ${formatPlayTime(duration)}` : ""}
+        </span>
+      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
+        onClick={handleDownload}
+        title="Download recording"
+      >
+        <Download className="w-3 h-3" />
+      </Button>
+    </div>
   );
 }
 
@@ -141,7 +292,8 @@ export default function CallLogs({ trigger, onCallNumber }) {
                   <TableHead>Number</TableHead>
                   <TableHead>Time</TableHead>
                   <TableHead>Duration</TableHead>
-                  <TableHead>Info</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Recording</TableHead>
                   <TableHead className="w-[80px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -165,6 +317,13 @@ export default function CallLogs({ trigger, onCallNumber }) {
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={log.status} />
+                    </TableCell>
+                    <TableCell>
+                      {log.recordingId ? (
+                        <RecordingPlayer recordingId={log.recordingId} callTime={log.time} />
+                      ) : (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
