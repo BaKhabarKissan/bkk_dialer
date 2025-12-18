@@ -287,7 +287,7 @@ export default function Settings({ trigger }) {
             <TabsContent value="call" className="m-0 p-6">
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h3 className="font-medium text-sm">Auto Answer</h3>
+                  <h3 className="font-semibold text-base">Auto Answer</h3>
                   <SettingRow label="Auto Answer">
                     <Select
                       value={localSettings.autoAnswer}
@@ -308,7 +308,7 @@ export default function Settings({ trigger }) {
 
                   <Separator />
 
-                  <h3 className="font-medium text-sm">DTMF</h3>
+                  <h3 className="font-semibold text-base">DTMF</h3>
                   <SettingRow label="DTMF Method">
                     <Select
                       value={localSettings.dtmfMethod}
@@ -388,7 +388,7 @@ export default function Settings({ trigger }) {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="font-medium text-sm">Interface</h3>
+                  <h3 className="font-semibold text-base">Interface</h3>
                   <div className="space-y-1">
                     <SettingCheckbox
                       label="Sound Events"
@@ -417,7 +417,7 @@ export default function Settings({ trigger }) {
             <TabsContent value="audio" className="m-0 p-6">
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h3 className="font-medium text-sm">Ringtone</h3>
+                  <h3 className="font-semibold text-base">Ringtone</h3>
                   <SettingRow label="Ringtone">
                     <div className="flex items-center gap-2">
                       <Input
@@ -455,7 +455,7 @@ export default function Settings({ trigger }) {
 
                   <Separator />
 
-                  <h3 className="font-medium text-sm">Devices</h3>
+                  <h3 className="font-semibold text-base">Devices</h3>
                   <SettingRow label="Speaker">
                     <Select
                       value={localSettings.speaker}
@@ -495,7 +495,7 @@ export default function Settings({ trigger }) {
 
                   <Separator />
 
-                  <h3 className="font-medium text-sm">Audio Processing</h3>
+                  <h3 className="font-semibold text-base">Audio Processing</h3>
                   <div className="space-y-1">
                     <SettingCheckbox
                       label="Echo Cancellation"
@@ -519,7 +519,7 @@ export default function Settings({ trigger }) {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="font-medium text-sm">Audio Codecs</h3>
+                  <h3 className="font-semibold text-base">Audio Codecs</h3>
                   <p className="text-xs text-muted-foreground">
                     Select and order preferred audio codecs. WebRTC will negotiate the best available codec.
                   </p>
@@ -535,7 +535,7 @@ export default function Settings({ trigger }) {
             {/* Network Settings */}
             <TabsContent value="network" className="m-0 p-6">
               <div className="max-w-lg space-y-4">
-                <h3 className="font-medium text-sm">STUN Server</h3>
+                <h3 className="font-semibold text-base">STUN Server</h3>
                 <p className="text-xs text-muted-foreground">
                   STUN server helps establish peer-to-peer connections through NAT.
                 </p>
@@ -550,7 +550,7 @@ export default function Settings({ trigger }) {
 
                 <Separator />
 
-                <h3 className="font-medium text-sm">TURN Server</h3>
+                <h3 className="font-semibold text-base">TURN Server</h3>
                 <p className="text-xs text-muted-foreground">
                   TURN server relays media when direct connection is not possible.
                 </p>
