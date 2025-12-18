@@ -25,7 +25,8 @@ export default function Dialer() {
   const currentCallLogRef = useRef(null);
   const callStartTimeRef = useRef(null);
 
-  const sip = useSip(config);
+  // Pass settings to useSip hook for full integration
+  const sip = useSip(config, settings);
   const {
     registrationStatus,
     callStatus,
@@ -34,6 +35,7 @@ export default function Dialer() {
     isMuted,
     isSpeakerMuted,
     isOnHold,
+    isRecording,
     isRegistered,
     isInCall,
     connect,
@@ -46,17 +48,10 @@ export default function Dialer() {
     toggleSpeaker,
     toggleHold,
     sendDTMF,
+    toggleRecording,
   } = sip;
 
   const hasInitialConnectRef = useRef(false);
-  const ringtoneSound = useRef(null);
-
-  // Initialize ringtone for incoming call detection
-  useEffect(() => {
-    ringtoneSound.current = new Audio(settings.ringtone || "/sounds/ringtone.mp3");
-    ringtoneSound.current.loop = true;
-    ringtoneSound.current.volume = settings.ringtoneVolume / 100;
-  }, [settings.ringtone, settings.ringtoneVolume]);
 
   // Reset connect ref when account changes
   useEffect(() => {
@@ -260,6 +255,7 @@ export default function Dialer() {
           remoteNumber,
           isMuted,
           isOnHold,
+          isRecording,
           isRegistered,
           isInCall,
           call,
@@ -268,6 +264,7 @@ export default function Dialer() {
           reject,
           toggleMute,
           toggleHold,
+          toggleRecording,
           sendDTMF,
         }}
       />
@@ -294,8 +291,10 @@ export default function Dialer() {
         onHangup={hangup}
         onToggleMute={toggleMute}
         onToggleSpeaker={toggleSpeaker}
+        onToggleRecording={toggleRecording}
         isMuted={isMuted}
         isSpeakerMuted={isSpeakerMuted}
+        isRecording={isRecording}
       />
     </div>
   );

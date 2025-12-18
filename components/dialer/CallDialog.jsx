@@ -14,6 +14,7 @@ import {
   MicOff,
   Volume2,
   VolumeX,
+  Circle,
 } from "lucide-react";
 
 // Get initials from name or number
@@ -55,8 +56,10 @@ export default function CallDialog({
   onHangup,
   onToggleMute,
   onToggleSpeaker,
+  onToggleRecording,
   isMuted = false,
   isSpeakerMuted = false,
+  isRecording = false,
 }) {
   const [callDuration, setCallDuration] = useState(0);
   const [pulseIndex, setPulseIndex] = useState(0);
@@ -133,12 +136,19 @@ export default function CallDialog({
             onToggleSpeaker();
           }
           break;
+        case "r":
+        case "R":
+          if (isInCall && onToggleRecording) {
+            e.preventDefault();
+            onToggleRecording();
+          }
+          break;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, direction, status, onAnswer, onReject, onHangup, onToggleMute, onToggleSpeaker]);
+  }, [isOpen, direction, status, onAnswer, onReject, onHangup, onToggleMute, onToggleSpeaker, onToggleRecording]);
 
   // Format duration as mm:ss
   const formatDuration = (seconds) => {
@@ -231,9 +241,9 @@ export default function CallDialog({
                 animate={
                   isRinging
                     ? {
-                        scale: [1, 1.05, 1],
-                        rotate: [0, -5, 5, -5, 0],
-                      }
+                      scale: [1, 1.05, 1],
+                      rotate: [0, -5, 5, -5, 0],
+                    }
                     : {}
                 }
                 transition={{
@@ -377,7 +387,7 @@ export default function CallDialog({
                 </motion.div>
               )}
 
-              {/* In Call: Mute & Hangup */}
+              {/* In Call: Mute, Record & Hangup */}
               {isInCall && (
                 <>
                   <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
@@ -391,6 +401,20 @@ export default function CallDialog({
                       onClick={onToggleMute}
                     >
                       {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                    </Button>
+                  </motion.div>
+
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      size="lg"
+                      variant={isRecording ? "default" : "outline"}
+                      className={cn(
+                        "h-14 w-14 rounded-full shadow-lg",
+                        isRecording && "bg-red-500 hover:bg-red-500/90"
+                      )}
+                      onClick={onToggleRecording}
+                    >
+                      <Circle className={cn("w-6 h-6", isRecording && "fill-current animate-pulse")} />
                     </Button>
                   </motion.div>
 
@@ -446,6 +470,10 @@ export default function CallDialog({
                   <span className="inline-flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">M</kbd>
                     Mute
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">R</kbd>
+                    Record
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">S</kbd>

@@ -671,26 +671,9 @@ export default function Settings({ trigger }) {
                 />
 
                 {localSettings.callRecording && (
-                  <>
-                    <Separator />
-                    <SettingRow label="Format">
-                      <Select
-                        value={localSettings.recordingFormat}
-                        onValueChange={(v) => handleChange("recordingFormat", v)}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="webm">WebM</SelectItem>
-                          <SelectItem value="mp3">MP3</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </SettingRow>
-                    <p className="text-xs text-muted-foreground">
-                      Recordings will be downloaded to your browser&apos;s default download folder when the call ends.
-                    </p>
-                  </>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Recordings will be saved as WebM files and downloaded to your browser&apos;s default download folder when the call ends.
+                  </p>
                 )}
               </div>
             </TabsContent>

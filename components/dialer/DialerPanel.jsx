@@ -42,7 +42,6 @@ const dialPadButtons = [
 export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipState }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isDND, setIsDND] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [activeKey, setActiveKey] = useState(null);
   const prevInitialNumberRef = useRef(initialNumber);
 
@@ -54,6 +53,7 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
     callStatus,
     isMuted,
     isOnHold,
+    isRecording,
     callDirection,
     remoteNumber,
     isRegistered,
@@ -64,11 +64,11 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
     reject,
     toggleMute,
     toggleHold,
+    toggleRecording,
     sendDTMF,
   } = sipState;
 
   const dialClickSound = useRef(null);
-  const ringtoneSound = useRef(null);
 
   // Update phone number when initialNumber changes
   useEffect(() => {
@@ -80,26 +80,11 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
     prevInitialNumberRef.current = initialNumber;
   }, [initialNumber, isInCall]);
 
-  // Initialize sounds
+  // Initialize dial click sound
   useEffect(() => {
     dialClickSound.current = new Audio("/sounds/dial-click.mp3");
     dialClickSound.current.volume = 0.5;
-    ringtoneSound.current = new Audio(settings.ringtone || "/sounds/ringtone.mp3");
-    ringtoneSound.current.loop = true;
-    ringtoneSound.current.volume = settings.ringtoneVolume / 100;
-  }, [settings.ringtone, settings.ringtoneVolume]);
-
-  // Play ringtone for incoming calls
-  useEffect(() => {
-    if (callStatus === CallStatus.RINGING && callDirection === "incoming" && !isDND) {
-      ringtoneSound.current?.play().catch(() => { });
-    } else {
-      ringtoneSound.current?.pause();
-      if (ringtoneSound.current) {
-        ringtoneSound.current.currentTime = 0;
-      }
-    }
-  }, [callStatus, callDirection, isDND]);
+  }, []);
 
   // Auto-reject incoming calls when DND is enabled
   useEffect(() => {
@@ -197,7 +182,7 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
         toggleHold();
       } else if (key.toLowerCase() === "r" && isInCall) {
         e.preventDefault();
-        setIsRecording((prev) => !prev);
+        toggleRecording();
       } else if (key.toLowerCase() === "d") {
         e.preventDefault();
         setIsDND((prev) => !prev);
@@ -206,7 +191,7 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, handleDigitPress, handleBackspace, handleCall, handleAnswer, handleReject, isInCall, callStatus, callDirection, hangup, toggleMute, toggleHold, onClose]);
+  }, [isOpen, handleDigitPress, handleBackspace, handleCall, handleAnswer, handleReject, isInCall, callStatus, callDirection, hangup, toggleMute, toggleHold, toggleRecording, onClose]);
 
   const formatPhoneNumber = (number) => {
     if (number.length === 0) return "";
@@ -362,7 +347,7 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
                       "flex-1 gap-1 h-9 text-sm",
                       isRecording && "bg-destructive hover:bg-destructive/90"
                     )}
-                    onClick={() => setIsRecording(!isRecording)}
+                    onClick={toggleRecording}
                   >
                     <Circle className={cn("w-3 h-3", isRecording && "fill-current")} />
                     {isRecording ? "Stop" : "Rec"}
