@@ -237,7 +237,7 @@ export default function CallDialog({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative z-10 flex flex-col items-center gap-6 p-8"
+            className="relative z-10 flex flex-col items-center gap-4 sm:gap-6 p-4 sm:p-8 w-full max-w-md mx-auto overflow-y-auto max-h-[100dvh] pb-safe"
           >
             {/* Call Direction Indicator */}
             <motion.div
@@ -305,12 +305,12 @@ export default function CallDialog({
                 }}
               >
                 <Avatar className={cn(
-                  "w-32 h-32 border-4",
+                  "w-24 h-24 sm:w-32 sm:h-32 border-4",
                   isIncoming ? "border-blue-500/50" : "border-green-500/50",
                   isInCall && "border-green-500"
                 )}>
                   <AvatarFallback className={cn(
-                    "text-3xl font-bold",
+                    "text-2xl sm:text-3xl font-bold",
                     isIncoming ? "bg-blue-500/10 text-blue-600" : "bg-green-500/10 text-green-600"
                   )}>
                     {getInitials(callerName, callerNumber)}
@@ -331,11 +331,11 @@ export default function CallDialog({
             </div>
 
             {/* Caller Info */}
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-1 sm:space-y-2">
               <motion.h2
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-2xl font-bold"
+                className="text-xl sm:text-2xl font-bold"
               >
                 {callerName || formatPhoneNumber(callerNumber) || "Unknown"}
               </motion.h2>
@@ -344,7 +344,7 @@ export default function CallDialog({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.1 }}
-                  className="text-lg text-muted-foreground font-mono"
+                  className="text-base sm:text-lg text-muted-foreground font-mono"
                 >
                   {formatPhoneNumber(callerNumber)}
                 </motion.p>
@@ -397,26 +397,26 @@ export default function CallDialog({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-6 mt-4"
+              className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mt-2 sm:mt-4 w-full"
             >
               {/* Incoming Call: Answer & Reject */}
               {isIncoming && isRinging && (
                 <>
-                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div whileTap={{ scale: 0.95 }}>
                     <Button
                       size="lg"
                       variant="destructive"
-                      className="h-16 w-16 rounded-full shadow-lg"
+                      className="h-16 w-16 sm:h-18 sm:w-18 rounded-full shadow-lg active:scale-95"
                       onClick={onReject}
                     >
                       <PhoneOff className="w-7 h-7" />
                     </Button>
                   </motion.div>
 
-                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div whileTap={{ scale: 0.95 }}>
                     <Button
                       size="lg"
-                      className="h-16 w-16 rounded-full bg-green-600 hover:bg-green-700 shadow-lg"
+                      className="h-16 w-16 sm:h-18 sm:w-18 rounded-full bg-green-600 hover:bg-green-700 shadow-lg active:scale-95"
                       onClick={onAnswer}
                     >
                       <Phone className="w-7 h-7" />
@@ -427,11 +427,11 @@ export default function CallDialog({
 
               {/* Outgoing Call (Ringing/Connecting): Hangup */}
               {!isIncoming && (isRinging || isConnecting) && (
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                <motion.div whileTap={{ scale: 0.95 }}>
                   <Button
                     size="lg"
                     variant="destructive"
-                    className="h-16 w-16 rounded-full shadow-lg"
+                    className="h-16 w-16 sm:h-18 sm:w-18 rounded-full shadow-lg active:scale-95"
                     onClick={onHangup}
                   >
                     <PhoneOff className="w-7 h-7" />
@@ -439,15 +439,16 @@ export default function CallDialog({
                 </motion.div>
               )}
 
-              {/* In Call: Mute, Record & Hangup */}
+              {/* In Call: Mute, Record, Hangup, Speaker, DTMF */}
               {isInCall && (
-                <>
-                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                <div className="grid grid-cols-3 gap-3 sm:flex sm:flex-wrap sm:justify-center sm:gap-4">
+                  {/* Row 1: Mute, Hangup, Speaker */}
+                  <motion.div whileTap={{ scale: 0.95 }} className="flex justify-center">
                     <Button
                       size="lg"
                       variant={isMuted ? "default" : "outline"}
                       className={cn(
-                        "h-14 w-14 rounded-full shadow-lg",
+                        "h-14 w-14 sm:h-16 sm:w-16 rounded-full shadow-lg active:scale-95",
                         isMuted && "bg-primary"
                       )}
                       onClick={onToggleMute}
@@ -456,40 +457,23 @@ export default function CallDialog({
                     </Button>
                   </motion.div>
 
-                  {recordingEnabled && (
-                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                      <Button
-                        size="lg"
-                        variant={isRecording ? "default" : "outline"}
-                        className={cn(
-                          "h-14 px-4 rounded-full shadow-lg gap-1",
-                          isRecording && "bg-destructive hover:bg-destructive/90"
-                        )}
-                        onClick={onToggleRecording}
-                      >
-                        <Circle className={cn("w-3 h-3", isRecording && "fill-current animate-pulse")} />
-                        <span className="text-sm font-medium">REC</span>
-                      </Button>
-                    </motion.div>
-                  )}
-
-                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div whileTap={{ scale: 0.95 }} className="flex justify-center">
                     <Button
                       size="lg"
                       variant="destructive"
-                      className="h-16 w-16 rounded-full shadow-lg"
+                      className="h-16 w-16 sm:h-18 sm:w-18 rounded-full shadow-lg active:scale-95"
                       onClick={onHangup}
                     >
                       <PhoneOff className="w-7 h-7" />
                     </Button>
                   </motion.div>
 
-                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div whileTap={{ scale: 0.95 }} className="flex justify-center">
                     <Button
                       size="lg"
                       variant={isSpeakerMuted ? "default" : "outline"}
                       className={cn(
-                        "h-14 w-14 rounded-full shadow-lg",
+                        "h-14 w-14 sm:h-16 sm:w-16 rounded-full shadow-lg active:scale-95",
                         isSpeakerMuted && "bg-primary"
                       )}
                       onClick={onToggleSpeaker}
@@ -498,13 +482,31 @@ export default function CallDialog({
                     </Button>
                   </motion.div>
 
+                  {/* Row 2: Recording, DTMF */}
+                  {recordingEnabled && (
+                    <motion.div whileTap={{ scale: 0.95 }} className="flex justify-center">
+                      <Button
+                        size="lg"
+                        variant={isRecording ? "default" : "outline"}
+                        className={cn(
+                          "h-14 w-14 sm:h-16 sm:w-auto sm:px-4 rounded-full shadow-lg gap-1 active:scale-95",
+                          isRecording && "bg-destructive hover:bg-destructive/90"
+                        )}
+                        onClick={onToggleRecording}
+                      >
+                        <Circle className={cn("w-3 h-3", isRecording && "fill-current animate-pulse")} />
+                        <span className="hidden sm:inline text-sm font-medium">REC</span>
+                      </Button>
+                    </motion.div>
+                  )}
+
                   {onSendDTMF && (
-                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                    <motion.div whileTap={{ scale: 0.95 }} className="flex justify-center">
                       <Button
                         size="lg"
                         variant={showDTMF ? "default" : "outline"}
                         className={cn(
-                          "h-14 w-14 rounded-full shadow-lg",
+                          "h-14 w-14 sm:h-16 sm:w-16 rounded-full shadow-lg active:scale-95",
                           showDTMF && "bg-primary"
                         )}
                         onClick={() => setShowDTMF(!showDTMF)}
@@ -513,66 +515,17 @@ export default function CallDialog({
                       </Button>
                     </motion.div>
                   )}
-                </>
+                </div>
               )}
             </motion.div>
 
-            {/* DTMF Dial Pad */}
-            <AnimatePresence>
-              {isInCall && showDTMF && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, height: "auto", scale: 1 }}
-                  exit={{ opacity: 0, height: 0, scale: 0.9 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                  className="mt-6 overflow-hidden"
-                >
-                  {/* DTMF Input Display */}
-                  {dtmfInput && (
-                    <div className="text-center mb-3">
-                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg">
-                        <span className="font-mono text-lg tracking-wider">{dtmfInput}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => setDtmfInput("")}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* DTMF Keypad */}
-                  <div className="grid grid-cols-3 gap-2 p-4 bg-card/50 rounded-xl border">
-                    {DTMF_KEYS.map(({ key, sub }) => (
-                      <motion.button
-                        key={key}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className={cn(
-                          "h-14 w-14 rounded-full bg-muted hover:bg-accent",
-                          "flex flex-col items-center justify-center",
-                          "transition-colors cursor-pointer border-0"
-                        )}
-                        onClick={() => handleDTMF(key)}
-                      >
-                        <span className="text-xl font-semibold">{key}</span>
-                        {sub && <span className="text-[10px] text-muted-foreground -mt-1">{sub}</span>}
-                      </motion.button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Keyboard Hints */}
+            {/* Keyboard Hints - Hidden on mobile */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="text-xs text-muted-foreground mt-4 space-x-4 flex flex-wrap justify-center gap-2"
+              className="hidden sm:flex text-xs text-muted-foreground mt-4 flex-wrap justify-center gap-2"
             >
               {isIncoming && isRinging && (
                 <>
@@ -620,6 +573,88 @@ export default function CallDialog({
               )}
             </motion.div>
           </motion.div>
+
+          {/* DTMF Popup */}
+          <AnimatePresence>
+            {isInCall && showDTMF && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-60 flex items-end sm:items-center justify-center p-4"
+                onClick={() => setShowDTMF(false)}
+              >
+                {/* Popup Backdrop */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/50"
+                />
+
+                {/* Popup Content */}
+                <motion.div
+                  initial={{ opacity: 0, y: 100, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 100, scale: 0.95 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  className="relative z-10 w-full max-w-sm bg-card rounded-2xl shadow-2xl overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Popup Header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/50">
+                    <span className="text-sm font-medium text-muted-foreground">Dialpad</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 active:scale-95"
+                      onClick={() => setShowDTMF(false)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {/* DTMF Input Display */}
+                  <div className="px-4 py-3 border-b min-h-13 flex items-center justify-center">
+                    {dtmfInput ? (
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xl sm:text-2xl tracking-widest">{dtmfInput}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 active:scale-95 text-muted-foreground"
+                          onClick={() => setDtmfInput("")}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Tap keys to send tones</span>
+                    )}
+                  </div>
+
+                  {/* DTMF Keypad */}
+                  <div className="grid grid-cols-3 gap-2 p-4">
+                    {DTMF_KEYS.map(({ key, sub }) => (
+                      <motion.button
+                        key={key}
+                        whileTap={{ scale: 0.9 }}
+                        className={cn(
+                          "h-16 sm:h-18 rounded-full bg-muted hover:bg-accent active:bg-accent",
+                          "flex flex-col items-center justify-center",
+                          "transition-colors cursor-pointer border-0 select-none touch-manipulation"
+                        )}
+                        onClick={() => handleDTMF(key)}
+                      >
+                        <span className="text-2xl sm:text-3xl font-semibold leading-none">{key}</span>
+                        {sub && <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{sub}</span>}
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
