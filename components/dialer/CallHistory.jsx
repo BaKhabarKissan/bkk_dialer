@@ -439,7 +439,7 @@ export default function CallHistory({ onCallNumber }) {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div>
-          <h2 className="text-xl font-semibold">Call History</h2>
+          <h2 className="md:text-xl text-base font-semibold">Call History</h2>
           <p className="text-sm text-muted-foreground">
             {logs.length} {logs.length === 1 ? "call" : "calls"}
           </p>
@@ -452,7 +452,7 @@ export default function CallHistory({ onCallNumber }) {
             onClick={clearLogs}
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            Clear All
+            <p className="md:block hidden">Clear All</p>
           </Button>
         )}
       </div>
