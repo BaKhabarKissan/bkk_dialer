@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,6 +15,8 @@ import {
   Volume2,
   VolumeX,
   Circle,
+  Grid3X3,
+  X,
 } from "lucide-react";
 
 // Get initials from name or number
@@ -45,6 +47,22 @@ function formatPhoneNumber(number) {
   return number;
 }
 
+// DTMF dial pad keys
+const DTMF_KEYS = [
+  { key: "1", sub: "" },
+  { key: "2", sub: "ABC" },
+  { key: "3", sub: "DEF" },
+  { key: "4", sub: "GHI" },
+  { key: "5", sub: "JKL" },
+  { key: "6", sub: "MNO" },
+  { key: "7", sub: "PQRS" },
+  { key: "8", sub: "TUV" },
+  { key: "9", sub: "WXYZ" },
+  { key: "*", sub: "" },
+  { key: "0", sub: "+" },
+  { key: "#", sub: "" },
+];
+
 export default function CallDialog({
   isOpen,
   direction, // "incoming" | "outgoing"
@@ -57,6 +75,7 @@ export default function CallDialog({
   onToggleMute,
   onToggleSpeaker,
   onToggleRecording,
+  onSendDTMF,
   isMuted = false,
   isSpeakerMuted = false,
   isRecording = false,
@@ -64,7 +83,17 @@ export default function CallDialog({
 }) {
   const [callDuration, setCallDuration] = useState(0);
   const [pulseIndex, setPulseIndex] = useState(0);
+  const [showDTMF, setShowDTMF] = useState(false);
+  const [dtmfInput, setDtmfInput] = useState("");
   const prevStatusRef = useRef(status);
+
+  // Handle DTMF key press
+  const handleDTMF = useCallback((key) => {
+    if (onSendDTMF) {
+      onSendDTMF(key);
+      setDtmfInput((prev) => prev + key);
+    }
+  }, [onSendDTMF]);
 
   // Call duration timer
   useEffect(() => {
@@ -75,6 +104,11 @@ export default function CallDialog({
     prevStatusRef.current = status;
 
     if (status !== "in_call") {
+      // Reset DTMF state when not in call
+      queueMicrotask(() => {
+        setShowDTMF(false);
+        setDtmfInput("");
+      });
       return;
     }
 
@@ -107,6 +141,16 @@ export default function CallDialog({
       const isIncoming = direction === "incoming";
       const isRinging = status === "ringing";
       const isInCall = status === "in_call";
+
+      // Handle DTMF keys during call (0-9, *, #)
+      if (isInCall && onSendDTMF) {
+        const dtmfKeys = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#"];
+        if (dtmfKeys.includes(e.key)) {
+          e.preventDefault();
+          handleDTMF(e.key);
+          return;
+        }
+      }
 
       switch (e.key) {
         case "Enter":
@@ -144,12 +188,19 @@ export default function CallDialog({
             onToggleRecording();
           }
           break;
+        case "d":
+        case "D":
+          if (isInCall) {
+            e.preventDefault();
+            setShowDTMF((prev) => !prev);
+          }
+          break;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, direction, status, onAnswer, onReject, onHangup, onToggleMute, onToggleSpeaker, onToggleRecording]);
+  }, [isOpen, direction, status, onAnswer, onReject, onHangup, onToggleMute, onToggleSpeaker, onToggleRecording, onSendDTMF, handleDTMF]);
 
   // Format duration as mm:ss
   const formatDuration = (seconds) => {
@@ -446,16 +497,82 @@ export default function CallDialog({
                       {isSpeakerMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
                     </Button>
                   </motion.div>
+
+                  {onSendDTMF && (
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                      <Button
+                        size="lg"
+                        variant={showDTMF ? "default" : "outline"}
+                        className={cn(
+                          "h-14 w-14 rounded-full shadow-lg",
+                          showDTMF && "bg-primary"
+                        )}
+                        onClick={() => setShowDTMF(!showDTMF)}
+                      >
+                        <Grid3X3 className="w-6 h-6" />
+                      </Button>
+                    </motion.div>
+                  )}
                 </>
               )}
             </motion.div>
+
+            {/* DTMF Dial Pad */}
+            <AnimatePresence>
+              {isInCall && showDTMF && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, height: "auto", scale: 1 }}
+                  exit={{ opacity: 0, height: 0, scale: 0.9 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  className="mt-6 overflow-hidden"
+                >
+                  {/* DTMF Input Display */}
+                  {dtmfInput && (
+                    <div className="text-center mb-3">
+                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg">
+                        <span className="font-mono text-lg tracking-wider">{dtmfInput}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => setDtmfInput("")}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* DTMF Keypad */}
+                  <div className="grid grid-cols-3 gap-2 p-4 bg-card/50 rounded-xl border">
+                    {DTMF_KEYS.map(({ key, sub }) => (
+                      <motion.button
+                        key={key}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={cn(
+                          "h-14 w-14 rounded-full bg-muted hover:bg-accent",
+                          "flex flex-col items-center justify-center",
+                          "transition-colors cursor-pointer border-0"
+                        )}
+                        onClick={() => handleDTMF(key)}
+                      >
+                        <span className="text-xl font-semibold">{key}</span>
+                        {sub && <span className="text-[10px] text-muted-foreground -mt-1">{sub}</span>}
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Keyboard Hints */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="text-xs text-muted-foreground mt-4 space-x-4"
+              className="text-xs text-muted-foreground mt-4 space-x-4 flex flex-wrap justify-center gap-2"
             >
               {isIncoming && isRinging && (
                 <>
@@ -483,6 +600,12 @@ export default function CallDialog({
                     <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">S</kbd>
                     Speaker
                   </span>
+                  {onSendDTMF && (
+                    <span className="inline-flex items-center gap-1">
+                      <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">D</kbd>
+                      Dialpad
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Esc</kbd>
                     Hangup

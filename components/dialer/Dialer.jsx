@@ -309,6 +309,7 @@ export default function Dialer() {
         onToggleMute={toggleMute}
         onToggleSpeaker={toggleSpeaker}
         onToggleRecording={toggleRecording}
+        onSendDTMF={sendDTMF}
         isMuted={isMuted}
         isSpeakerMuted={isSpeakerMuted}
         isRecording={isRecording}
