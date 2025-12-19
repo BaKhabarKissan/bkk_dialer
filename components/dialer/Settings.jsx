@@ -608,14 +608,16 @@ export default function Settings({ trigger }) {
           </div>
         </Tabs>
 
-        <DialogFooter className="px-4 sm:px-6 py-4 border-t shrink-0 flex-col-reverse sm:flex-row gap-2">
-          <Button variant="outline" onClick={handleReset} className="w-full sm:w-auto">
+        <DialogFooter className="px-4 sm:px-6 py-4 border-t shrink-0 grid grid-cols-2 sm:flex sm:flex-row gap-2">
+          <Button variant="outline" onClick={handleReset} className="col-span-2 order-3 sm:order-1">
             Reset to Defaults
           </Button>
-          <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={() => setOpen(false)} className="order-1 sm:order-2">
             Cancel
           </Button>
-          <Button onClick={handleSave} className="w-full sm:w-auto">Save</Button>
+          <Button onClick={handleSave} className="order-2 sm:order-3">
+            Save
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
