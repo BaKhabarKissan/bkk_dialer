@@ -39,9 +39,9 @@ import { cn } from "@/lib/utils";
 
 function SettingRow({ label, children, className }) {
   return (
-    <div className={cn("flex items-center justify-between gap-4 py-2", className)}>
+    <div className={cn("flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 py-2", className)}>
       <Label className="text-sm text-muted-foreground shrink-0">{label}</Label>
-      <div className="flex-1 flex justify-end">{children}</div>
+      <div className="flex-1 flex sm:justify-end">{children}</div>
     </div>
   );
 }
@@ -83,10 +83,10 @@ function CodecList({ available, enabled, onMove }) {
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-col sm:flex-row gap-2">
       <div className="flex-1">
         <Label className="text-xs text-muted-foreground mb-1 block">Available</Label>
-        <div className="border rounded-md h-32 overflow-auto p-1">
+        <div className="border rounded-md h-24 sm:h-32 overflow-auto p-1">
           {availableCodecsList.map((codec) => (
             <div
               key={codec.id}
@@ -102,7 +102,7 @@ function CodecList({ available, enabled, onMove }) {
           ))}
         </div>
       </div>
-      <div className="flex flex-col justify-center gap-1">
+      <div className="flex sm:flex-col justify-center gap-1">
         <Button
           variant="outline"
           size="icon"
@@ -110,7 +110,8 @@ function CodecList({ available, enabled, onMove }) {
           onClick={handleAddSelected}
           disabled={!selectedAvailable}
         >
-          →
+          <span className="sm:hidden">↓</span>
+          <span className="hidden sm:inline">→</span>
         </Button>
         <Button
           variant="outline"
@@ -119,12 +120,13 @@ function CodecList({ available, enabled, onMove }) {
           onClick={handleRemoveSelected}
           disabled={!selectedEnabled}
         >
-          ←
+          <span className="sm:hidden">↑</span>
+          <span className="hidden sm:inline">←</span>
         </Button>
       </div>
       <div className="flex-1">
         <Label className="text-xs text-muted-foreground mb-1 block">Enabled</Label>
-        <div className="border rounded-md h-32 overflow-auto p-1">
+        <div className="border rounded-md h-24 sm:h-32 overflow-auto p-1">
           {enabled.map((id) => {
             const codec = available.find((c) => c.id === id);
             return codec ? (
@@ -257,35 +259,35 @@ export default function Settings({ trigger }) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-4xl h-[80vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="px-6 py-4 border-b shrink-0">
+      <DialogContent className="w-[95vw] sm:max-w-6xl h-[90vh] sm:h-[80vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-4 sm:px-6 py-4 border-b shrink-0">
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="call" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="px-6 justify-start rounded-none bg-transparent h-auto py-0 shrink-0">
-            <TabsTrigger value="call">
+          <TabsList className="px-3 sm:px-6 justify-start rounded-none bg-transparent h-auto py-0 shrink-0">
+            <TabsTrigger value="call" className="px-2 sm:px-3">
               <Phone className="w-4 h-4" />
-              Call
+              <span className="hidden sm:inline">Call</span>
             </TabsTrigger>
-            <TabsTrigger value="audio">
+            <TabsTrigger value="audio" className="px-2 sm:px-3">
               <Volume2 className="w-4 h-4" />
-              Audio
+              <span className="hidden sm:inline">Audio</span>
             </TabsTrigger>
-            <TabsTrigger value="network">
+            <TabsTrigger value="network" className="px-2 sm:px-3">
               <Network className="w-4 h-4" />
-              Network
+              <span className="hidden sm:inline">Network</span>
             </TabsTrigger>
-            <TabsTrigger value="recording">
+            <TabsTrigger value="recording" className="px-2 sm:px-3">
               <HardDrive className="w-4 h-4" />
-              Recording
+              <span className="hidden sm:inline">Recording</span>
             </TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-y-auto">
             {/* Call Settings */}
-            <TabsContent value="call" className="m-0 p-6">
-              <div className="grid grid-cols-2 gap-8">
+            <TabsContent value="call" className="m-0 p-4 sm:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 <div className="space-y-4">
                   <h3 className="font-semibold text-base">Auto Answer</h3>
                   <SettingRow label="Auto Answer">
@@ -293,7 +295,7 @@ export default function Settings({ trigger }) {
                       value={localSettings.autoAnswer}
                       onValueChange={(v) => handleChange("autoAnswer", v)}
                     >
-                      <SelectTrigger className="w-40">
+                      <SelectTrigger className="w-32 sm:w-40">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -314,7 +316,7 @@ export default function Settings({ trigger }) {
                       value={localSettings.dtmfMethod}
                       onValueChange={(v) => handleChange("dtmfMethod", v)}
                     >
-                      <SelectTrigger className="w-40">
+                      <SelectTrigger className="w-32 sm:w-40">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -344,7 +346,7 @@ export default function Settings({ trigger }) {
                           value={localSettings.callForwardingType}
                           onValueChange={(v) => handleChange("callForwardingType", v)}
                         >
-                          <SelectTrigger className="w-40">
+                          <SelectTrigger className="w-32 sm:w-40">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -357,7 +359,7 @@ export default function Settings({ trigger }) {
                       </SettingRow>
                       <SettingRow label="Forward To">
                         <Input
-                          className="w-40"
+                          className="w-32 sm:w-40"
                           placeholder="Phone number"
                           value={localSettings.callForwardingNumber}
                           onChange={(e) => handleChange("callForwardingNumber", e.target.value)}
@@ -369,7 +371,7 @@ export default function Settings({ trigger }) {
                             value={String(localSettings.callForwardingNoAnswerDelay)}
                             onValueChange={(v) => handleChange("callForwardingNoAnswerDelay", parseInt(v))}
                           >
-                            <SelectTrigger className="w-40">
+                            <SelectTrigger className="w-32 sm:w-40">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -414,14 +416,14 @@ export default function Settings({ trigger }) {
             </TabsContent>
 
             {/* Audio Settings */}
-            <TabsContent value="audio" className="m-0 p-6">
-              <div className="grid grid-cols-2 gap-8">
+            <TabsContent value="audio" className="m-0 p-4 sm:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 <div className="space-y-4">
                   <h3 className="font-semibold text-base">Ringtone</h3>
                   <SettingRow label="Ringtone">
                     <div className="flex items-center gap-2">
                       <Input
-                        className="w-40"
+                        className="w-28 sm:w-40"
                         placeholder="/sounds/ringtone.mp3"
                         value={localSettings.ringtone}
                         onChange={(e) => handleChange("ringtone", e.target.value)}
@@ -441,7 +443,7 @@ export default function Settings({ trigger }) {
                     </div>
                   </SettingRow>
                   <SettingRow label="Volume">
-                    <div className="flex items-center gap-2 w-48">
+                    <div className="flex items-center gap-2 w-36 sm:w-48">
                       <Slider
                         value={[localSettings.ringtoneVolume]}
                         onValueChange={([v]) => handleChange("ringtoneVolume", v)}
@@ -461,7 +463,7 @@ export default function Settings({ trigger }) {
                       value={localSettings.speaker}
                       onValueChange={(v) => handleChange("speaker", v)}
                     >
-                      <SelectTrigger className="w-48">
+                      <SelectTrigger className="w-36 sm:w-48">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -479,7 +481,7 @@ export default function Settings({ trigger }) {
                       value={localSettings.microphone}
                       onValueChange={(v) => handleChange("microphone", v)}
                     >
-                      <SelectTrigger className="w-48">
+                      <SelectTrigger className="w-36 sm:w-48">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -533,7 +535,7 @@ export default function Settings({ trigger }) {
             </TabsContent>
 
             {/* Network Settings */}
-            <TabsContent value="network" className="m-0 p-6">
+            <TabsContent value="network" className="m-0 p-4 sm:p-6">
               <div className="max-w-lg space-y-4">
                 <h3 className="font-semibold text-base">STUN Server</h3>
                 <p className="text-xs text-muted-foreground">
@@ -541,7 +543,7 @@ export default function Settings({ trigger }) {
                 </p>
                 <SettingRow label="STUN Server">
                   <Input
-                    className="w-64"
+                    className="w-full sm:w-64"
                     placeholder="stun:server:port"
                     value={localSettings.stunServer}
                     onChange={(e) => handleChange("stunServer", e.target.value)}
@@ -556,7 +558,7 @@ export default function Settings({ trigger }) {
                 </p>
                 <SettingRow label="TURN Server">
                   <Input
-                    className="w-64"
+                    className="w-full sm:w-64"
                     placeholder="turn:server:port"
                     value={localSettings.turnServer}
                     onChange={(e) => handleChange("turnServer", e.target.value)}
@@ -566,7 +568,7 @@ export default function Settings({ trigger }) {
                   <>
                     <SettingRow label="Username">
                       <Input
-                        className="w-48"
+                        className="w-full sm:w-48"
                         placeholder="Username"
                         value={localSettings.turnUsername}
                         onChange={(e) => handleChange("turnUsername", e.target.value)}
@@ -574,7 +576,7 @@ export default function Settings({ trigger }) {
                     </SettingRow>
                     <SettingRow label="Password">
                       <Input
-                        className="w-48"
+                        className="w-full sm:w-48"
                         type="password"
                         placeholder="Password"
                         value={localSettings.turnPassword}
@@ -587,7 +589,7 @@ export default function Settings({ trigger }) {
             </TabsContent>
 
             {/* Recording Settings */}
-            <TabsContent value="recording" className="m-0 p-6">
+            <TabsContent value="recording" className="m-0 p-4 sm:p-6">
               <div className="max-w-md space-y-4">
                 <SettingCheckbox
                   label="Enable Call Recording"
@@ -606,14 +608,14 @@ export default function Settings({ trigger }) {
           </div>
         </Tabs>
 
-        <DialogFooter className="px-6 py-4 border-t shrink-0">
-          <Button variant="outline" onClick={handleReset}>
+        <DialogFooter className="px-4 sm:px-6 py-4 border-t shrink-0 flex-col-reverse sm:flex-row gap-2">
+          <Button variant="outline" onClick={handleReset} className="w-full sm:w-auto">
             Reset to Defaults
           </Button>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={handleSave} className="w-full sm:w-auto">Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
