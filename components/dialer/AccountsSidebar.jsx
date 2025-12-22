@@ -189,6 +189,7 @@ export default function AccountsSidebar({
   onConnect,
   onDisconnect,
   onCallNumber,
+  isMobileView = false,
 }) {
   const {
     accounts,
@@ -204,8 +205,9 @@ export default function AccountsSidebar({
   const [editingAccount, setEditingAccount] = useState(null);
   const [isMediumScreen, setIsMediumScreen] = useState(false);
 
-  // Auto-collapse on medium screens and track screen size
+  // Auto-collapse on medium screens and track screen size (skip for mobile view)
   useEffect(() => {
+    if (isMobileView) return;
     const handleResize = () => {
       const isMedium = window.innerWidth < 1024;
       setIsMediumScreen(isMedium);
@@ -216,10 +218,10 @@ export default function AccountsSidebar({
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [isMobileView]);
 
-  // Overlay mode: on medium screen when expanded
-  const isOverlay = isMediumScreen && !isCollapsed;
+  // Overlay mode: on medium screen when expanded (not for mobile view)
+  const isOverlay = !isMobileView && isMediumScreen && !isCollapsed;
 
   const handleAddAccount = (data) => {
     addAccount(data);
@@ -243,6 +245,228 @@ export default function AccountsSidebar({
     }
   };
 
+  // Mobile view - render as full-width content
+  if (isMobileView) {
+    return (
+      <div className="h-full flex flex-col bg-background">
+        {/* Header */}
+        <div className="p-4 border-b border-border shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Accounts</h2>
+            <div className="flex items-center gap-2">
+              <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 gap-1.5">
+                    <Plus className="w-4 h-4" />
+                    Add
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add SIP Account</DialogTitle>
+                    <DialogDescription>
+                      Enter your SIP account credentials to connect.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <AccountForm
+                    onSave={handleAddAccount}
+                    onCancel={() => setAddDialogOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex gap-2">
+            <Settings
+              trigger={
+                <Button variant="outline" size="sm" className="flex-1 gap-1.5 h-10">
+                  <SettingsIcon className="w-4 h-4" />
+                  Settings
+                </Button>
+              }
+            />
+            <CallLogs
+              onCallNumber={onCallNumber}
+              trigger={
+                <Button variant="outline" size="sm" className="flex-1 gap-1.5 h-10">
+                  <History className="w-4 h-4" />
+                  Logs
+                </Button>
+              }
+            />
+            <ModeToggle />
+          </div>
+        </div>
+
+        {/* Account List */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="p-3">
+            {accounts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <User className="w-12 h-12 mb-3 opacity-50" />
+                <p className="text-base">No accounts yet</p>
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => setAddDialogOpen(true)}
+                >
+                  Add your first account
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {accounts.map((account) => {
+                  const isActive = account.id === activeAccountId;
+                  const status = isActive ? registrationStatus : RegistrationStatus.UNREGISTERED;
+
+                  return (
+                    <div
+                      key={account.id}
+                      className={cn(
+                        "p-4 rounded-lg border transition-colors",
+                        isActive
+                          ? "border-primary bg-primary/5"
+                          : "border-border bg-card"
+                      )}
+                      onClick={() => handleSelectAccount(account.id)}
+                    >
+                      {/* Account Header */}
+                      <div className="flex items-start gap-3">
+                        {/* Avatar */}
+                        <div
+                          className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                            isActive ? "bg-primary/20" : "bg-muted"
+                          )}
+                        >
+                          {isActive && isRegistered ? (
+                            <Wifi className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <User className="w-5 h-5 text-muted-foreground" />
+                          )}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-medium truncate">
+                              {account.displayName || account.username}
+                            </p>
+                            {isActive && (
+                              <Check className="w-4 h-4 text-primary shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {account.username}@{account.domain || account.server}
+                          </p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-1">
+                          <Dialog
+                            open={editingAccount?.id === account.id}
+                            onOpenChange={(open) =>
+                              setEditingAccount(open ? account : null)
+                            }
+                          >
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Edit2 className="w-5 h-5" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent onClick={(e) => e.stopPropagation()}>
+                              <DialogHeader>
+                                <DialogTitle>Edit Account</DialogTitle>
+                                <DialogDescription>
+                                  Update your SIP account settings.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <AccountForm
+                                account={editingAccount}
+                                onSave={handleUpdateAccount}
+                                onCancel={() => setEditingAccount(null)}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteAccount(account.id);
+                            }}
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Status & Connect */}
+                      <div className="mt-3 flex items-center justify-between">
+                        <AccountStatusBadge status={status} />
+
+                        {isActive && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 h-9"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              isRegistered ? onDisconnect?.() : onConnect?.();
+                            }}
+                            disabled={status === RegistrationStatus.REGISTERING}
+                          >
+                            {status === RegistrationStatus.REGISTERING ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Connecting...
+                              </>
+                            ) : isRegistered ? (
+                              <>
+                                <WifiOff className="w-4 h-4" />
+                                Disconnect
+                              </>
+                            ) : (
+                              <>
+                                <Wifi className="w-4 h-4" />
+                                Connect
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        {/* Footer */}
+        <div className="p-3 border-t border-border shrink-0">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>{accounts.length} account{accounts.length !== 1 ? "s" : ""}</span>
+            {activeAccountId && (
+              <Badge className={`text-xs ${isRegistered ? "bg-green-600" : "bg-red-600"}`}>
+                {isRegistered ? "Online" : "Offline"}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop view - sidebar with collapse functionality
   return (
     <>
       {/* Backdrop for overlay mode */}

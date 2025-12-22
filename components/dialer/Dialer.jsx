@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Phone, X } from "lucide-react";
+import { Phone, X, History, Users, User } from "lucide-react";
 import useSip, { CallStatus, RegistrationStatus } from "@/lib/sip/useSip";
 import { useSipConfig, useSettings, useCallLogs, useContacts } from "@/lib/store/hooks";
 import ContactsSidebar from "./ContactsSidebar";
@@ -13,9 +13,72 @@ import CallHistory from "./CallHistory";
 import DialerPanel from "./DialerPanel";
 import CallDialog from "./CallDialog";
 
+// Mobile Bottom Navigation Component
+function MobileBottomNav({ activeTab, onTabChange, onDialerOpen, hasIncomingCall }) {
+  const tabs = [
+    { id: "history", icon: History, label: "History" },
+    { id: "contacts", icon: Users, label: "Contacts" },
+    { id: "accounts", icon: User, label: "Accounts" },
+  ];
+
+  return (
+    <motion.div
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      className="fixed bottom-0 left-0 right-0 z-30 bg-background border-t border-border md:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      <div className="flex items-center justify-around h-16">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={cn(
+                "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors touch-manipulation",
+                isActive
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium">{tab.label}</span>
+            </button>
+          );
+        })}
+        {/* Dial Button */}
+        <button
+          onClick={onDialerOpen}
+          className={cn(
+            "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors touch-manipulation",
+            hasIncomingCall
+              ? "text-blue-500 animate-pulse"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <div
+            className={cn(
+              "w-10 h-10 rounded-full flex items-center justify-center",
+              hasIncomingCall
+                ? "bg-blue-500 text-white"
+                : "bg-primary text-primary-foreground"
+            )}
+          >
+            <Phone className="w-5 h-5" />
+          </div>
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function Dialer() {
   const [isDialerOpen, setIsDialerOpen] = useState(false);
   const [selectedNumber, setSelectedNumber] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileActiveTab, setMobileActiveTab] = useState("history");
 
   const { config, isConfigured, isLoaded, activeAccountId } = useSipConfig();
   const { settings } = useSettings();
@@ -79,6 +142,16 @@ export default function Dialer() {
       connect();
     }
   }, [isLoaded, isConfigured, registrationStatus, connect]);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Auto-open dialer on incoming call
   const prevCallStatusRef = useRef(callStatus);
@@ -187,28 +260,75 @@ export default function Dialer() {
     }
   }, [isInCall]);
 
+  const hasIncomingCall = callStatus === CallStatus.RINGING && callDirection === "incoming";
+
+  // Render mobile content based on active tab
+  const renderMobileContent = () => {
+    switch (mobileActiveTab) {
+      case "contacts":
+        return (
+          <ContactsSidebar
+            onCallNumber={handleCallNumber}
+            isMobileView={true}
+          />
+        );
+      case "accounts":
+        return (
+          <AccountsSidebar
+            registrationStatus={registrationStatus}
+            isRegistered={isRegistered}
+            onConnect={connect}
+            onDisconnect={disconnect}
+            onCallNumber={handleCallNumber}
+            isMobileView={true}
+          />
+        );
+      case "history":
+      default:
+        return <CallHistory onCallNumber={handleCallNumber} isMobileView={true} />;
+    }
+  };
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-background flex">
-      {/* Left Panel - Contacts */}
-      <ContactsSidebar onCallNumber={handleCallNumber} />
+      {/* Desktop Layout - Sidebars visible */}
+      <div className="hidden md:flex md:flex-1">
+        {/* Left Panel - Contacts */}
+        <ContactsSidebar onCallNumber={handleCallNumber} />
 
-      {/* Main Panel - Call History */}
-      <div className="flex-1 flex flex-col">
-        <CallHistory onCallNumber={handleCallNumber} />
+        {/* Main Panel - Call History */}
+        <div className="flex-1 flex flex-col">
+          <CallHistory onCallNumber={handleCallNumber} />
+        </div>
+
+        {/* Right Panel - Accounts */}
+        <AccountsSidebar
+          registrationStatus={registrationStatus}
+          isRegistered={isRegistered}
+          onConnect={connect}
+          onDisconnect={disconnect}
+          onCallNumber={handleCallNumber}
+        />
       </div>
 
-      {/* Right Panel - Accounts */}
-      <AccountsSidebar
-        registrationStatus={registrationStatus}
-        isRegistered={isRegistered}
-        onConnect={connect}
-        onDisconnect={disconnect}
-        onCallNumber={handleCallNumber}
-      />
+      {/* Mobile Layout - Tab-based content */}
+      <div className="flex-1 flex flex-col md:hidden pb-16">
+        {renderMobileContent()}
+      </div>
 
-      {/* Floating Dialer Button */}
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <MobileBottomNav
+          activeTab={mobileActiveTab}
+          onTabChange={setMobileActiveTab}
+          onDialerOpen={toggleDialer}
+          hasIncomingCall={hasIncomingCall}
+        />
+      )}
+
+      {/* Floating Dialer Button - Desktop only */}
       <motion.div
-        className="fixed right-8 bottom-10 z-30"
+        className="fixed right-8 bottom-10 z-30 hidden md:block"
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
@@ -227,7 +347,7 @@ export default function Dialer() {
                 className={cn(
                   "h-16 w-16 rounded-full shadow-lg hover:shadow-xl transition-shadow",
                   "bg-primary hover:bg-primary/90 transition",
-                  callStatus === CallStatus.RINGING && callDirection === "incoming" && "animate-pulse bg-blue-600 hover:bg-blue-700"
+                  hasIncomingCall && "animate-pulse bg-blue-600 hover:bg-blue-700"
                 )}
                 onClick={toggleDialer}
               >
@@ -264,6 +384,7 @@ export default function Dialer() {
         isOpen={isDialerOpen}
         onClose={closeDialer}
         initialNumber={selectedNumber}
+        isMobile={isMobile}
         sipState={{
           registrationStatus,
           callStatus,

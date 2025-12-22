@@ -237,7 +237,11 @@ export default function CallDialog({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative z-10 flex flex-col items-center gap-4 sm:gap-6 p-4 sm:p-8 w-full max-w-md mx-auto overflow-y-auto max-h-[100dvh] pb-safe"
+            className="relative z-10 flex flex-col items-center gap-4 sm:gap-6 p-4 sm:p-8 w-full max-w-md mx-auto overflow-y-auto max-h-[100dvh]"
+            style={{
+              paddingTop: "max(1rem, env(safe-area-inset-top))",
+              paddingBottom: "max(1rem, env(safe-area-inset-bottom))"
+            }}
           >
             {/* Call Direction Indicator */}
             <motion.div

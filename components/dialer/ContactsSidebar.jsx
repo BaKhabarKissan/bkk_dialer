@@ -96,7 +96,7 @@ function ContactForm({ contact, onSave, onCancel }) {
   );
 }
 
-export default function ContactsSidebar({ onCallNumber }) {
+export default function ContactsSidebar({ onCallNumber, isMobileView = false }) {
   const {
     contacts,
     searchQuery,
@@ -112,8 +112,9 @@ export default function ContactsSidebar({ onCallNumber }) {
   const [editingContact, setEditingContact] = useState(null);
   const [isMediumScreen, setIsMediumScreen] = useState(false);
 
-  // Auto-collapse on medium screens and track screen size
+  // Auto-collapse on medium screens and track screen size (skip for mobile view)
   useEffect(() => {
+    if (isMobileView) return;
     const handleResize = () => {
       const isMedium = window.innerWidth < 1024;
       setIsMediumScreen(isMedium);
@@ -124,10 +125,10 @@ export default function ContactsSidebar({ onCallNumber }) {
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [isMobileView]);
 
-  // Overlay mode: on medium screen when expanded
-  const isOverlay = isMediumScreen && !isCollapsed;
+  // Overlay mode: on medium screen when expanded (not for mobile view)
+  const isOverlay = !isMobileView && isMediumScreen && !isCollapsed;
 
   const handleAddContact = (data) => {
     addContact(data);
@@ -141,6 +142,172 @@ export default function ContactsSidebar({ onCallNumber }) {
     }
   };
 
+  // Mobile view - render as full-width content
+  if (isMobileView) {
+    return (
+      <div className="h-full flex flex-col bg-background">
+        {/* Header */}
+        <div className="p-4 border-b border-border shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Contacts</h2>
+            <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-1.5">
+                  <Plus className="w-4 h-4" />
+                  Add
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Contact</DialogTitle>
+                </DialogHeader>
+                <ContactForm
+                  onSave={handleAddContact}
+                  onCancel={() => setAddDialogOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search contacts..."
+              className="pl-9 h-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Contact List */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="p-3">
+            {contacts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <User className="w-12 h-12 mb-3 opacity-50" />
+                <p className="text-base">
+                  {searchQuery ? "No contacts found" : "No contacts yet"}
+                </p>
+                {!searchQuery && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => setAddDialogOpen(true)}
+                  >
+                    Add your first contact
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {contacts.map((contact) => (
+                  <div
+                    key={contact.id}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border"
+                  >
+                    {/* Avatar */}
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-medium text-primary">
+                        {contact.name?.charAt(0)?.toUpperCase() || "?"}
+                      </span>
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-medium truncate">{contact.name}</p>
+                        {contact.favorite && (
+                          <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground font-mono truncate">
+                        {contact.number}
+                      </p>
+                      {contact.company && (
+                        <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                          <Building className="w-3 h-3" />
+                          {contact.company}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 text-green-600"
+                        onClick={() => onCallNumber?.(contact.number)}
+                      >
+                        <Phone className="w-5 h-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10"
+                        onClick={() => toggleFavorite(contact.id)}
+                      >
+                        <Star
+                          className={cn(
+                            "w-5 h-5",
+                            contact.favorite && "text-amber-500 fill-amber-500"
+                          )}
+                        />
+                      </Button>
+                      <Dialog
+                        open={editingContact?.id === contact.id}
+                        onOpenChange={(open) =>
+                          setEditingContact(open ? contact : null)
+                        }
+                      >
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-10 w-10">
+                            <Edit2 className="w-5 h-5" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Contact</DialogTitle>
+                          </DialogHeader>
+                          <ContactForm
+                            contact={editingContact}
+                            onSave={handleUpdateContact}
+                            onCancel={() => setEditingContact(null)}
+                          />
+                        </DialogContent>
+                      </Dialog>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 text-destructive"
+                        onClick={() => deleteContact(contact.id)}
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        {/* Footer Stats */}
+        <div className="p-3 border-t border-border shrink-0">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>{contacts.length} contacts</span>
+            <Badge variant="secondary">
+              {contacts.filter((c) => c.favorite).length} favorites
+            </Badge>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop view - sidebar with collapse functionality
   return (
     <>
       {/* Backdrop for overlay mode */}

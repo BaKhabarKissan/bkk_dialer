@@ -287,7 +287,7 @@ function DateGroup({ label, logs, onCall, onDelete, onPlayRecording, onDownloadR
   );
 }
 
-export default function CallHistory({ onCallNumber }) {
+export default function CallHistory({ onCallNumber, isMobileView = false }) {
   const { logs, deleteLog, clearLogs } = useCallLogs();
   const [playingRecordingId, setPlayingRecordingId] = useState(null);
   const audioRef = useRef(null);
@@ -420,12 +420,24 @@ export default function CallHistory({ onCallNumber }) {
           transition={{ duration: 0.5 }}
           className="space-y-4"
         >
-          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto">
-            <Phone className="w-10 h-10 text-muted-foreground" />
+          <div className={cn(
+            "rounded-full bg-muted flex items-center justify-center mx-auto",
+            isMobileView ? "w-24 h-24" : "w-20 h-20"
+          )}>
+            <Phone className={cn(
+              "text-muted-foreground",
+              isMobileView ? "w-12 h-12" : "w-10 h-10"
+            )} />
           </div>
           <div>
-            <h3 className="text-xl font-semibold">No Call History</h3>
-            <p className="text-muted-foreground mt-1">
+            <h3 className={cn(
+              "font-semibold",
+              isMobileView ? "text-2xl" : "text-xl"
+            )}>No Call History</h3>
+            <p className={cn(
+              "text-muted-foreground mt-1",
+              isMobileView && "text-base"
+            )}>
               Your recent calls will appear here
             </p>
           </div>
@@ -435,11 +447,17 @@ export default function CallHistory({ onCallNumber }) {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className={cn(
+        "flex items-center justify-between border-b",
+        isMobileView ? "p-4" : "p-4"
+      )}>
         <div>
-          <h2 className="md:text-xl text-base font-semibold">Call History</h2>
+          <h2 className={cn(
+            "font-semibold",
+            isMobileView ? "text-lg" : "md:text-xl text-base"
+          )}>Call History</h2>
           <p className="text-sm text-muted-foreground">
             {logs.length} {logs.length === 1 ? "call" : "calls"}
           </p>
@@ -447,19 +465,25 @@ export default function CallHistory({ onCallNumber }) {
         {logs.length > 0 && (
           <Button
             variant="ghost"
-            size="sm"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            size={isMobileView ? "default" : "sm"}
+            className={cn(
+              "text-destructive hover:text-destructive hover:bg-destructive/10",
+              isMobileView && "h-10"
+            )}
             onClick={clearLogs}
           >
-            <Trash2 className="w-4 h-4 mr-2" />
-            <p className="md:block hidden">Clear All</p>
+            <Trash2 className={isMobileView ? "w-5 h-5" : "w-4 h-4 mr-2"} />
+            <p className={isMobileView ? "ml-2" : "md:block hidden"}>Clear All</p>
           </Button>
         )}
       </div>
 
       {/* Logs List */}
       <ScrollArea className="flex-1 min-h-0">
-        <div className="p-4 space-y-6">
+        <div className={cn(
+          "space-y-6",
+          isMobileView ? "p-3" : "p-4"
+        )}>
           {groupedLogs.map((group) => (
             <DateGroup
               key={group.label}

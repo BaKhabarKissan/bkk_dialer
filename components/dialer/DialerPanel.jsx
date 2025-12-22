@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -39,7 +38,7 @@ const dialPadButtons = [
   { digit: "#", letters: "" },
 ];
 
-export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipState }) {
+export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipState, isMobile = false }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isDND, setIsDND] = useState(false);
   const [activeKey, setActiveKey] = useState(null);
@@ -244,31 +243,63 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-            onClick={!isInCall ? onClose : undefined}
-          />
+          {/* Backdrop - only on desktop */}
+          {!isMobile && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+              onClick={!isInCall ? onClose : undefined}
+            />
+          )}
 
-          {/* Dialer Panel */}
+          {/* Dialer Panel - Full screen on mobile, card on desktop */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 50 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 50 }}
+            initial={isMobile ? { opacity: 0, y: "100%" } : { opacity: 0, scale: 0.9, y: 50 }}
+            animate={isMobile ? { opacity: 1, y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+            exit={isMobile ? { opacity: 0, y: "100%" } : { opacity: 0, scale: 0.9, y: 50 }}
             transition={{
               type: "spring",
               damping: 25,
               stiffness: 300
             }}
-            className="fixed right-8 bottom-24 z-50"
+            className={cn(
+              "z-50",
+              isMobile
+                ? "fixed inset-0 bg-background flex flex-col"
+                : "fixed right-8 bottom-24"
+            )}
           >
-            <Card className="w-80 p-5 shadow-2xl border-2">
-              {/* Close Button */}
-              {!isInCall && (
+            <div className={cn(
+              isMobile
+                ? "flex-1 flex flex-col overflow-y-auto"
+                : "w-80 p-5 shadow-2xl border-2 rounded-xl bg-card"
+            )}
+            style={isMobile ? { paddingBottom: "env(safe-area-inset-bottom, 0px)" } : undefined}
+            >
+              {/* Mobile Header */}
+              {isMobile && (
+                <div className="flex items-center justify-between p-4 border-b border-border shrink-0"
+                  style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+                >
+                  <h2 className="text-lg font-semibold">Dialer</h2>
+                  {!isInCall && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={onClose}
+                    >
+                      <X className="w-5 h-5" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Desktop Close Button */}
+              {!isMobile && !isInCall && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -279,8 +310,16 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
                 </Button>
               )}
 
+              {/* Content wrapper */}
+              <div className={cn(
+                isMobile ? "flex-1 flex flex-col p-4 max-w-md mx-auto w-full" : ""
+              )}>
+
               {/* Display */}
-              <div className="bg-muted/50 rounded-lg p-4 mb-4 mt-4">
+              <div className={cn(
+                "bg-muted/50 rounded-lg p-4 mb-4",
+                !isMobile && "mt-4"
+              )}>
                 <div className="flex items-center justify-between mb-2">
                   {getCallStatusBadge() || (
                     <span className="text-xs text-muted-foreground">
@@ -376,24 +415,31 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
               )}
 
               {/* Dial Pad */}
-              <div className="grid grid-cols-3 gap-1.5 mb-4">
+              <div className={cn(
+                "grid grid-cols-3 mb-4",
+                isMobile ? "gap-3 flex-1" : "gap-1.5"
+              )}>
                 {dialPadButtons.map((btn) => (
                   <motion.div
                     key={btn.digit}
                     whileTap={{ scale: 0.95 }}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={!isMobile ? { scale: 1.02 } : undefined}
                   >
                     <Button
                       variant="outline"
                       className={cn(
-                        "h-12 w-full text-lg font-medium hover:bg-accent hover:border-primary transition-all flex flex-col items-center justify-center gap-0 rounded-md",
+                        "w-full font-medium hover:bg-accent hover:border-primary transition-all flex flex-col items-center justify-center gap-0 rounded-xl touch-manipulation",
+                        isMobile ? "h-16 text-2xl" : "h-12 text-lg rounded-md",
                         activeKey === btn.digit && "bg-accent border-primary"
                       )}
                       onClick={() => handleDigitPress(btn.digit)}
                     >
                       <span>{btn.digit}</span>
                       {btn.letters && (
-                        <span className="text-[8px] font-normal text-muted-foreground tracking-widest">
+                        <span className={cn(
+                          "font-normal text-muted-foreground tracking-widest",
+                          isMobile ? "text-[10px]" : "text-[8px]"
+                        )}>
                           {btn.letters}
                         </span>
                       )}
@@ -404,20 +450,26 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
 
               {/* Call Buttons */}
               {callStatus === CallStatus.RINGING && callDirection === "incoming" ? (
-                <div className="flex gap-2">
+                <div className={cn("flex gap-3", isMobile && "mt-auto")}>
                   <Button
                     variant="destructive"
-                    className="flex-1 h-11 text-base font-medium gap-2"
+                    className={cn(
+                      "flex-1 font-medium gap-2 touch-manipulation",
+                      isMobile ? "h-14 text-lg rounded-xl" : "h-11 text-base"
+                    )}
                     onClick={handleReject}
                   >
-                    <PhoneOff className="w-5 h-5" />
+                    <PhoneOff className={isMobile ? "w-6 h-6" : "w-5 h-5"} />
                     Reject
                   </Button>
                   <Button
-                    className="flex-1 h-11 text-base font-medium gap-2 bg-green-600 hover:bg-green-700"
+                    className={cn(
+                      "flex-1 font-medium gap-2 bg-green-600 hover:bg-green-700 touch-manipulation",
+                      isMobile ? "h-14 text-lg rounded-xl" : "h-11 text-base"
+                    )}
                     onClick={handleAnswer}
                   >
-                    <Phone className="w-5 h-5" />
+                    <Phone className={isMobile ? "w-6 h-6" : "w-5 h-5"} />
                     Answer
                   </Button>
                 </div>
@@ -425,7 +477,8 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
                 <Button
                   variant={isInCall ? "destructive" : "default"}
                   className={cn(
-                    "w-full h-11 text-base font-medium gap-2",
+                    "w-full font-medium gap-2 touch-manipulation",
+                    isMobile ? "h-14 text-lg rounded-xl mt-auto" : "h-11 text-base",
                     !isInCall && "bg-green-600 hover:bg-green-700"
                   )}
                   onClick={handleCall}
@@ -433,12 +486,12 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
                 >
                   {isInCall ? (
                     <>
-                      <PhoneOff className="w-5 h-5" />
+                      <PhoneOff className={isMobile ? "w-6 h-6" : "w-5 h-5"} />
                       End Call
                     </>
                   ) : (
                     <>
-                      <Phone className="w-5 h-5" />
+                      <Phone className={isMobile ? "w-6 h-6" : "w-5 h-5"} />
                       Call
                     </>
                   )}
@@ -451,7 +504,8 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
                   Add a SIP account to make calls
                 </p>
               )}
-            </Card>
+              </div>
+            </div>
           </motion.div>
         </>
       )}
