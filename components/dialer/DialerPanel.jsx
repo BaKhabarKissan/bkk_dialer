@@ -38,6 +38,22 @@ const dialPadButtons = [
   { digit: "#", letters: "" },
 ];
 
+// DTMF frequencies - each digit is a combination of a row and column frequency
+const DTMF_FREQUENCIES = {
+  "1": [697, 1209],
+  "2": [697, 1336],
+  "3": [697, 1477],
+  "4": [770, 1209],
+  "5": [770, 1336],
+  "6": [770, 1477],
+  "7": [852, 1209],
+  "8": [852, 1336],
+  "9": [852, 1477],
+  "*": [941, 1209],
+  "0": [941, 1336],
+  "#": [941, 1477],
+};
+
 export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipState, isMobile = false }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isDND, setIsDND] = useState(false);
@@ -68,7 +84,7 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
     recordingEnabled,
   } = sipState;
 
-  const dialClickSound = useRef(null);
+  const audioContextRef = useRef(null);
 
   // Update phone number when initialNumber changes
   useEffect(() => {
@@ -80,10 +96,14 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
     prevInitialNumberRef.current = initialNumber;
   }, [initialNumber, isInCall]);
 
-  // Initialize dial click sound
+  // Initialize AudioContext for DTMF tones
   useEffect(() => {
-    dialClickSound.current = new Audio("/sounds/dial-click.mp3");
-    dialClickSound.current.volume = 0.5;
+    audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
   }, []);
 
   // Auto-reject incoming calls when DND is enabled
@@ -93,16 +113,60 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
     }
   }, [isDND, callStatus, callDirection, reject]);
 
-  const playDialSound = useCallback(() => {
-    if (dialClickSound.current) {
-      dialClickSound.current.currentTime = 0;
-      dialClickSound.current.play().catch(() => { });
+  const playDTMFTone = useCallback((digit) => {
+    const ctx = audioContextRef.current;
+    if (!ctx || !DTMF_FREQUENCIES[digit]) return;
+
+    // Resume context if suspended (required for browsers that block autoplay)
+    if (ctx.state === "suspended") {
+      ctx.resume();
     }
+
+    const [lowFreq, highFreq] = DTMF_FREQUENCIES[digit];
+    const duration = 0.2;
+    const volume = 0.25;
+    const attack = 0.01; // Soft attack to avoid click
+    const release = 0.05; // Smooth release
+
+    // Create oscillators and gain nodes
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    // Add a low-pass filter to soften the harshness
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 3000;
+    filter.Q.value = 0.5;
+
+    osc1.type = "sine";
+    osc2.type = "sine";
+    osc1.frequency.value = lowFreq;
+    osc2.frequency.value = highFreq;
+
+    // Connect: oscillators -> filter -> gain -> output
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    // Envelope: soft attack, sustain, smooth release
+    const now = ctx.currentTime;
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(volume, now + attack);
+    gainNode.gain.setValueAtTime(volume, now + duration - release);
+    gainNode.gain.linearRampToValueAtTime(0, now + duration);
+
+    // Start and stop oscillators
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + duration + 0.01);
+    osc2.stop(now + duration + 0.01);
   }, []);
 
   const handleDigitPress = useCallback(
     (digit) => {
-      playDialSound();
+      playDTMFTone(digit);
       // Send DTMF if in call
       if (callStatus === CallStatus.IN_CALL) {
         sendDTMF(digit);
@@ -111,7 +175,7 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
         setPhoneNumber((prev) => prev + digit);
       }
     },
-    [phoneNumber.length, playDialSound, callStatus, sendDTMF]
+    [phoneNumber.length, playDTMFTone, callStatus, sendDTMF]
   );
 
   const handleBackspace = useCallback(() => {
