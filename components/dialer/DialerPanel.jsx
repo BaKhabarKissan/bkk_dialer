@@ -250,7 +250,7 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/50 backdrop-blur-xs z-40"
               onClick={!isInCall ? onClose : undefined}
             />
           )}
@@ -277,7 +277,7 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
                 ? "flex-1 flex flex-col overflow-y-auto"
                 : "w-80 p-5 shadow-2xl border-2 rounded-xl bg-card"
             )}
-            style={isMobile ? { paddingBottom: "env(safe-area-inset-bottom, 0px)" } : undefined}
+              style={isMobile ? { paddingBottom: "env(safe-area-inset-bottom, 0px)" } : undefined}
             >
               {/* Mobile Header */}
               {isMobile && (
@@ -315,195 +315,195 @@ export default function DialerPanel({ isOpen, onClose, initialNumber = "", sipSt
                 isMobile ? "flex-1 flex flex-col p-4 max-w-md mx-auto w-full" : ""
               )}>
 
-              {/* Display */}
-              <div className={cn(
-                "bg-muted/50 rounded-lg p-4 mb-4",
-                !isMobile && "mt-4"
-              )}>
-                <div className="flex items-center justify-between mb-2">
-                  {getCallStatusBadge() || (
-                    <span className="text-xs text-muted-foreground">
-                      {isRegistered ? "Enter number" : "Not connected"}
-                    </span>
-                  )}
+                {/* Display */}
+                <div className={cn(
+                  "bg-muted/50 rounded-lg p-4 mb-4",
+                  !isMobile && "mt-4"
+                )}>
+                  <div className="flex items-center justify-between mb-2">
+                    {getCallStatusBadge() || (
+                      <span className="text-xs text-muted-foreground">
+                        {isRegistered ? "Enter number" : "Not connected"}
+                      </span>
+                    )}
+                    <div className="flex items-center gap-2">
+                      {isDND && (
+                        <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-xs">
+                          <BellOff className="w-3 h-3 mr-1" />
+                          DND
+                        </Badge>
+                      )}
+                      {recordingEnabled && isRecording && isInCall && (
+                        <div className="flex items-center gap-1 text-destructive">
+                          <Circle className="w-3 h-3 fill-destructive animate-pulse" />
+                          <span className="text-xs">REC</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
-                    {isDND && (
-                      <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-xs">
-                        <BellOff className="w-3 h-3 mr-1" />
-                        DND
-                      </Badge>
-                    )}
-                    {recordingEnabled && isRecording && isInCall && (
-                      <div className="flex items-center gap-1 text-destructive">
-                        <Circle className="w-3 h-3 fill-destructive animate-pulse" />
-                        <span className="text-xs">REC</span>
-                      </div>
-                    )}
+                    <p
+                      className={cn(
+                        "text-2xl font-mono tracking-wider flex-1",
+                        displayNumber ? "text-foreground" : "text-muted-foreground/50"
+                      )}
+                    >
+                      {formatPhoneNumber(displayNumber) || "___-___-____"}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={handleBackspace}
+                      disabled={phoneNumber.length === 0 || isInCall}
+                    >
+                      <Delete className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <p
-                    className={cn(
-                      "text-2xl font-mono tracking-wider flex-1",
-                      displayNumber ? "text-foreground" : "text-muted-foreground/50"
-                    )}
-                  >
-                    {formatPhoneNumber(displayNumber) || "___-___-____"}
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={handleBackspace}
-                    disabled={phoneNumber.length === 0 || isInCall}
-                  >
-                    <Delete className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
 
-              {/* In-Call Controls */}
-              {isInCall && (
-                <div className="flex gap-2 mb-3">
-                  <Button
-                    variant={isMuted ? "default" : "outline"}
-                    className={cn("flex-1 gap-1 h-9 text-sm", isMuted && "bg-primary")}
-                    onClick={toggleMute}
-                  >
-                    {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                    {isMuted ? "Unmute" : "Mute"}
-                  </Button>
-                  <Button
-                    variant={isOnHold ? "default" : "outline"}
-                    className={cn("flex-1 gap-1 h-9 text-sm", isOnHold && "bg-primary")}
-                    onClick={toggleHold}
-                  >
-                    {isOnHold ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-                    {isOnHold ? "Resume" : "Hold"}
-                  </Button>
-                  {recordingEnabled && (
+                {/* In-Call Controls */}
+                {isInCall && (
+                  <div className="flex gap-2 mb-3">
                     <Button
-                      variant={isRecording ? "default" : "outline"}
-                      className={cn(
-                        "flex-1 gap-1 h-9 text-sm",
-                        isRecording && "bg-destructive hover:bg-destructive/90"
-                      )}
-                      onClick={toggleRecording}
+                      variant={isMuted ? "default" : "outline"}
+                      className={cn("flex-1 gap-1 h-9 text-sm", isMuted && "bg-primary")}
+                      onClick={toggleMute}
                     >
-                      <Circle className={cn("w-3 h-3", isRecording && "fill-current")} />
-                      {isRecording ? "Stop" : "Rec"}
+                      {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                      {isMuted ? "Unmute" : "Mute"}
                     </Button>
-                  )}
-                </div>
-              )}
-
-              {/* DND Toggle (when not in call) */}
-              {!isInCall && (
-                <div className="flex gap-2 mb-3">
-                  <Button
-                    variant={isDND ? "default" : "outline"}
-                    className={cn(
-                      "flex-1 gap-2 h-9",
-                      isDND && "bg-amber-600 hover:bg-amber-700"
-                    )}
-                    onClick={() => setIsDND(!isDND)}
-                  >
-                    <BellOff className="w-4 h-4" />
-                    {isDND ? "DND On" : "DND Off"}
-                  </Button>
-                </div>
-              )}
-
-              {/* Dial Pad */}
-              <div className={cn(
-                "grid grid-cols-3 mb-4",
-                isMobile ? "gap-3 flex-1" : "gap-1.5"
-              )}>
-                {dialPadButtons.map((btn) => (
-                  <motion.div
-                    key={btn.digit}
-                    whileTap={{ scale: 0.95 }}
-                    whileHover={!isMobile ? { scale: 1.02 } : undefined}
-                  >
                     <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full font-medium hover:bg-accent hover:border-primary transition-all flex flex-col items-center justify-center gap-0 rounded-xl touch-manipulation",
-                        isMobile ? "h-16 text-2xl" : "h-12 text-lg rounded-md",
-                        activeKey === btn.digit && "bg-accent border-primary"
-                      )}
-                      onClick={() => handleDigitPress(btn.digit)}
+                      variant={isOnHold ? "default" : "outline"}
+                      className={cn("flex-1 gap-1 h-9 text-sm", isOnHold && "bg-primary")}
+                      onClick={toggleHold}
                     >
-                      <span>{btn.digit}</span>
-                      {btn.letters && (
-                        <span className={cn(
-                          "font-normal text-muted-foreground tracking-widest",
-                          isMobile ? "text-[10px]" : "text-[8px]"
-                        )}>
-                          {btn.letters}
-                        </span>
-                      )}
+                      {isOnHold ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                      {isOnHold ? "Resume" : "Hold"}
                     </Button>
-                  </motion.div>
-                ))}
-              </div>
+                    {recordingEnabled && (
+                      <Button
+                        variant={isRecording ? "default" : "outline"}
+                        className={cn(
+                          "flex-1 gap-1 h-9 text-sm",
+                          isRecording && "bg-destructive hover:bg-destructive/90"
+                        )}
+                        onClick={toggleRecording}
+                      >
+                        <Circle className={cn("w-3 h-3", isRecording && "fill-current")} />
+                        {isRecording ? "Stop" : "Rec"}
+                      </Button>
+                    )}
+                  </div>
+                )}
 
-              {/* Call Buttons */}
-              {callStatus === CallStatus.RINGING && callDirection === "incoming" ? (
-                <div className={cn("flex gap-3", isMobile && "mt-auto")}>
-                  <Button
-                    variant="destructive"
-                    className={cn(
-                      "flex-1 font-medium gap-2 touch-manipulation",
-                      isMobile ? "h-14 text-lg rounded-xl" : "h-11 text-base"
-                    )}
-                    onClick={handleReject}
-                  >
-                    <PhoneOff className={isMobile ? "w-6 h-6" : "w-5 h-5"} />
-                    Reject
-                  </Button>
-                  <Button
-                    className={cn(
-                      "flex-1 font-medium gap-2 bg-green-600 hover:bg-green-700 touch-manipulation",
-                      isMobile ? "h-14 text-lg rounded-xl" : "h-11 text-base"
-                    )}
-                    onClick={handleAnswer}
-                  >
-                    <Phone className={isMobile ? "w-6 h-6" : "w-5 h-5"} />
-                    Answer
-                  </Button>
+                {/* DND Toggle (when not in call) */}
+                {!isInCall && (
+                  <div className="flex gap-2 mb-3">
+                    <Button
+                      variant={isDND ? "default" : "outline"}
+                      className={cn(
+                        "flex-1 gap-2 h-9",
+                        isDND && "bg-amber-600 hover:bg-amber-700"
+                      )}
+                      onClick={() => setIsDND(!isDND)}
+                    >
+                      <BellOff className="w-4 h-4" />
+                      {isDND ? "DND On" : "DND Off"}
+                    </Button>
+                  </div>
+                )}
+
+                {/* Dial Pad */}
+                <div className={cn(
+                  "grid grid-cols-3 mb-4",
+                  isMobile ? "gap-3 flex-1" : "gap-1.5"
+                )}>
+                  {dialPadButtons.map((btn) => (
+                    <motion.div
+                      key={btn.digit}
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={!isMobile ? { scale: 1.02 } : undefined}
+                    >
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full font-medium hover:bg-accent hover:border-primary transition-all flex flex-col items-center justify-center gap-0 rounded-xl touch-manipulation",
+                          isMobile ? "h-16 text-2xl" : "h-12 text-lg rounded-md",
+                          activeKey === btn.digit && "bg-accent border-primary"
+                        )}
+                        onClick={() => handleDigitPress(btn.digit)}
+                      >
+                        <span>{btn.digit}</span>
+                        {btn.letters && (
+                          <span className={cn(
+                            "font-normal text-muted-foreground tracking-widest",
+                            isMobile ? "text-[10px]" : "text-[8px]"
+                          )}>
+                            {btn.letters}
+                          </span>
+                        )}
+                      </Button>
+                    </motion.div>
+                  ))}
                 </div>
-              ) : (
-                <Button
-                  variant={isInCall ? "destructive" : "default"}
-                  className={cn(
-                    "w-full font-medium gap-2 touch-manipulation",
-                    isMobile ? "h-14 text-lg rounded-xl mt-auto" : "h-11 text-base",
-                    !isInCall && "bg-green-600 hover:bg-green-700"
-                  )}
-                  onClick={handleCall}
-                  disabled={(!isInCall && phoneNumber.length === 0) || (!isInCall && !isRegistered)}
-                >
-                  {isInCall ? (
-                    <>
+
+                {/* Call Buttons */}
+                {callStatus === CallStatus.RINGING && callDirection === "incoming" ? (
+                  <div className={cn("flex gap-3", isMobile && "mt-auto")}>
+                    <Button
+                      variant="destructive"
+                      className={cn(
+                        "flex-1 font-medium gap-2 touch-manipulation",
+                        isMobile ? "h-14 text-lg rounded-xl" : "h-11 text-base"
+                      )}
+                      onClick={handleReject}
+                    >
                       <PhoneOff className={isMobile ? "w-6 h-6" : "w-5 h-5"} />
-                      End Call
-                    </>
-                  ) : (
-                    <>
+                      Reject
+                    </Button>
+                    <Button
+                      className={cn(
+                        "flex-1 font-medium gap-2 bg-green-600 hover:bg-green-700 touch-manipulation",
+                        isMobile ? "h-14 text-lg rounded-xl" : "h-11 text-base"
+                      )}
+                      onClick={handleAnswer}
+                    >
                       <Phone className={isMobile ? "w-6 h-6" : "w-5 h-5"} />
-                      Call
-                    </>
-                  )}
-                </Button>
-              )}
+                      Answer
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant={isInCall ? "destructive" : "default"}
+                    className={cn(
+                      "w-full font-medium gap-2 touch-manipulation",
+                      isMobile ? "h-14 text-lg rounded-xl mt-auto" : "h-11 text-base",
+                      !isInCall && "bg-green-600 hover:bg-green-700"
+                    )}
+                    onClick={handleCall}
+                    disabled={(!isInCall && phoneNumber.length === 0) || (!isInCall && !isRegistered)}
+                  >
+                    {isInCall ? (
+                      <>
+                        <PhoneOff className={isMobile ? "w-6 h-6" : "w-5 h-5"} />
+                        End Call
+                      </>
+                    ) : (
+                      <>
+                        <Phone className={isMobile ? "w-6 h-6" : "w-5 h-5"} />
+                        Call
+                      </>
+                    )}
+                  </Button>
+                )}
 
-              {/* Not Configured Message */}
-              {!isConfigured && isLoaded && (
-                <p className="text-center text-xs text-muted-foreground mt-3">
-                  Add a SIP account to make calls
-                </p>
-              )}
+                {/* Not Configured Message */}
+                {!isConfigured && isLoaded && (
+                  <p className="text-center text-xs text-muted-foreground mt-3">
+                    Add a SIP account to make calls
+                  </p>
+                )}
               </div>
             </div>
           </motion.div>

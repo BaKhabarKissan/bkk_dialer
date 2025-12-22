@@ -228,7 +228,7 @@ export default function CallDialog({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background/95 backdrop-blur-md"
+            className="absolute inset-0 bg-background/95 backdrop-blur-xs"
           />
 
           {/* Dialog Content */}
